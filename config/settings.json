@@ -1,0 +1,13 @@
+{
+  "contact_email": "fallout-demo@ksahoo.com",
+  "github_org": "fallout-demo",
+  "allowed_repos": [
+    "fallout-demo/billing-api",
+    "fallout-demo/storefront-next",
+    "fallout-demo/cli-tool",
+    "fallout-demo/vite-dashboard",
+    "fallout-demo/monorepo-tools",
+    "fallout-demo/notify-worker"
+  ],
+  "replay_incident": "npm-2025-09-08-chalk-debug"
+}

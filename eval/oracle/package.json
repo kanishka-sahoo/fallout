@@ -1,0 +1,18 @@
+{
+  "name": "fallout-oracle",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "private": "true",
+  "dependencies": {
+    "@npmcli/arborist": "^10.0.3",
+    "semver": "^7.8.5"
+  }
+}

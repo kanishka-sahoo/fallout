@@ -1,0 +1,15 @@
+.env
+data/raw/
+data/cache/
+data/snapshots/
+scratch/
+node_modules/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+web/dist/
+eval/oracle/trees/
+data/logs/
