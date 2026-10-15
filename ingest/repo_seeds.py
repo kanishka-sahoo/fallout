@@ -13,10 +13,10 @@ import json
 import os
 import subprocess
 from pathlib import Path
-from typing import Any
 
 from dotenv import load_dotenv
 
+from fallout.repo import manifests, parse_overrides
 from fallout.settings import RAW_DIR, ROOT, SETTINGS
 
 REPOS_DIR = RAW_DIR / "repos"
@@ -42,32 +42,6 @@ def sync_repo(full_name: str) -> Path:
     return dest
 
 
-def manifests(repo_dir: Path) -> list[Path]:
-    """Root package.json plus each workspace package.json (glob patterns only)."""
-    root = repo_dir / "package.json"
-    if not root.exists():
-        return []
-    found = [root]
-    workspaces = json.loads(root.read_text()).get("workspaces", [])
-    if isinstance(workspaces, dict):  # yarn-style {"packages": [...]}
-        workspaces = workspaces.get("packages", [])
-    for pattern in workspaces:
-        found += sorted(p / "package.json" for p in repo_dir.glob(pattern) if (p / "package.json").exists())
-    return found
-
-
-def flatten_overrides(overrides: dict[str, Any]) -> list[tuple[str, str]]:
-    """{"a": "1", "b": {"c": "2", ".": "3"}} -> [("a","1"), ("c","2"), ("b","3")]."""
-    out: list[tuple[str, str]] = []
-    for name, spec in overrides.items():
-        if isinstance(spec, str):
-            out.append((name, spec))
-        else:
-            for child, child_spec in spec.items():
-                out += flatten_overrides({name if child == "." else child: child_spec})
-    return out
-
-
 def repo_seed_pairs(repo_dir: Path) -> list[dict[str, str]]:
     paths = manifests(repo_dir)
     docs = [json.loads(p.read_text()) for p in paths]
@@ -78,8 +52,8 @@ def repo_seed_pairs(repo_dir: Path) -> list[dict[str, str]]:
             for name, spec in d.get(field, {}).items():
                 if name not in internal:
                     pairs.append({"name": name, "range": spec, "source": scope})
-        for name, spec in flatten_overrides(d.get("overrides", {})):
-            pairs.append({"name": name, "range": spec, "source": "override"})
+        for o in parse_overrides(d):
+            pairs.append({"name": o.name, "range": o.spec, "source": "override"})
     return pairs
 
 

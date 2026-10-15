@@ -3,12 +3,17 @@ on: [push, pull_request]
 jobs:
   python:
     runs-on: ubuntu-latest
+    services:
+      falkordb:  # the BFS and anchor tests use a throwaway graph
+        image: falkordb/falkordb:latest
+        ports: ["6380:6379"]
+        options: --health-cmd "redis-cli ping" --health-interval 5s --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
       - run: uv sync
       - run: uv run ruff check .
-      - run: uv run mypy ingest
+      - run: uv run mypy ingest fallout eval
       - run: uv run pytest
   node:
     runs-on: ubuntu-latest

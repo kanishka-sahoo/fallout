@@ -76,7 +76,9 @@ async function main () {
   if (a['tree-out']) {
     writeFileSync(a['tree-out'], JSON.stringify(nodes.map((n) => ({
       location: n.location,
-      name: n.name,
+      name: n.name, // folder name: an alias (`strip-ansi-cjs`) or workspace link name
+      package: n.packageName, // the registry package actually installed
+      workspace: n.isLink || n.isWorkspace,
       version: n.version,
       edgesOut: [...n.edgesOut.values()].map((e) => ({ name: e.name, spec: e.spec, type: e.type, to: e.to?.version ?? null })),
     }))))

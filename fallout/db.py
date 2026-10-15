@@ -15,10 +15,23 @@ QUERIES_DIR = ROOT / "graph" / "queries"
 GRAPH_NAME = os.environ.get("FALLOUT_GRAPH", "fallout")
 
 
+# The image defaults cap result sets at 10k rows and kill queries after 1 s. Both truncate a
+# blast radius silently, so lift them on every connect instead of trusting the container args.
+SERVER_CONFIG = {"RESULTSET_SIZE": -1, "TIMEOUT": 0, "TIMEOUT_DEFAULT": 0, "TIMEOUT_MAX": 0}
+
+
+@cache
+def _db(host: str, port: int) -> FalkorDB:
+    db = FalkorDB(host=host, port=port)
+    for k, v in SERVER_CONFIG.items():
+        db.config_set(k, v)
+    return db
+
+
 def graph(name: str = GRAPH_NAME) -> Graph:
     host = os.environ.get("FALKORDB_HOST", "localhost")
     port = int(os.environ.get("FALKORDB_PORT", "6380"))
-    return FalkorDB(host=host, port=port).select_graph(name)
+    return _db(host, port).select_graph(name)
 
 
 @cache

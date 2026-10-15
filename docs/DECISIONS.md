@@ -14,6 +14,9 @@ known approximation. The README's Limitations section is generated from this fil
 | D5 | §5.1 seeds: ~20k | 17,338: all of `npm-high-impact` (`npmHighImpact` is already the union of top-by-downloads and top-by-dependents) | No larger primary list without BigQuery. The closure is 33.5k versions and 115k dependency edges. |
 | D6 | §6.1 any tool-calling LLM; §8 temperature 0 | OpenAI `gpt-6-luna`, at a fixed reasoning effort | The user's choice. See the model notes below. Temperature 0 is not available on current reasoning models. |
 | D7 | Local ports 6379/3000 | FalkorDB on `127.0.0.1:6380`, browser on `3001` (`FALKORDB_PORT`, `FALKORDB_BROWSER_PORT`) | Port 3000 is taken on the dev machine. |
+| D8 | §7.5: gather a repo's reachable affected packages with `[:DIRECT_DEP\|DEPENDS_ON*0..12]` | Walk the repo's resolved closure hop by hop from Python (`fallout/blast.py::Closure`), then read its `CAN_RESOLVE_TO` edges in one query | A variable-length pattern enumerates paths, not nodes, so it blows up on diamond-shaped trees. The closure walk is linear and its adjacency also gives the override-coverage check and the per-package paths. |
+| D9 | §7.4: one path per repo, from `EXPOSES.via` | The `via` path is kept, and each repo also gets `paths_by_package`: the shortest closure path to every affected package it reaches, preferring a route that no scoped override covers | The `via` path can run through a package an override already mitigates (e.g. `monorepo-tools` → `eslint` → `debug`), which hides why the repo is still exposed (`error-ex`). `plan_fix` needs every affected package anyway. |
+| D10 | §5.0 oracle rule "admits" | Unchanged in `oracle.mjs`, checked equal to D1 | Each malicious release was tagged `latest` and was the newest version, so "admits" ⇔ "would pick". Measured on the loaded graph: both rules give the same 790 `CAN_RESOLVE_TO` edges. |
 
 ## Data-quality rules added during ingest
 
@@ -28,6 +31,28 @@ known approximation. The README's Limitations section is generated from this fil
   today's deprecation flags, not the flags at S. When *every* version is deprecated, the flag cannot
   change the ranking, but it does stop npm-pick-manifest from using the default version (e.g. `@mui/base`).
 - **Maintainer data stores usernames only, never emails.**
+- **Lockfile versions the crawl never resolved get stub `Version` nodes** (`from_lockfile: true`, no
+  `published_at`, no `DEPENDS_ON`), so `LOCKS` can point at them. In the demo org that is exactly one
+  node: the synthetic `debug@4.4.2`, which `ingest_advisory` then marks malicious.
+- **Package maintainers and provenance come from the package's newest version in the graph**, which
+  stands in for the `latest` at S.
+- **Graph `Package` count is 21,006; `summary.json` says 21,741.** The crawl summary counts every
+  packument fetched, including packages whose only candidate versions were pruned as spam or hit
+  `ETARGET`.
+
+## Operational notes
+
+- **FalkorDB's image defaults truncate silently**: `RESULTSET_SIZE 10000` caps result sets and
+  `TIMEOUT 1000` kills queries after 1 s. Both cut the blast radius short on this graph.
+  `fallout/db.py` lifts them on every connect, and `docker-compose.yml` sets them for new containers.
+
+## Friday gate: demo repos vs the oracle
+
+`uv run python -m eval.demo_check` writes `eval/demo_check.json`. All 6 demo repos match the
+oracle on exposure and on the set of affected packages they reach. Every hop of every graph path
+exists in the oracle's tree, and every shortestPath cross-check has the same length as the path.
+The graph's resolved closure and arborist's tree agree with a Jaccard similarity between 0.84 and 1.0; every difference is a
+peer dependency or the `monorepo-tools` override (limitations 4 and 9).
 
 ## Limitations (to state in the README)
 
@@ -47,6 +72,14 @@ known approximation. The README's Limitations section is generated from this fil
    hand-edited to `debug@4.4.2`.
 8. **Packages that did not exist at S** (283 ETARGET seeds, e.g. `@anthropic-ai/claude-agent-sdk`)
    are correctly absent from the graph.
+9. **Peer dependencies resolve independently.** The graph resolves a peer range to its highest
+   match at S, while npm reuses the version the root already installs (e.g. `@vitejs/plugin-react`
+   peers on `vite@^4||^5||^6||^7`: the graph picks `vite@7.1.5`, npm reuses the root's `vite@5`).
+   This can only add paths, never remove them, and it explains every closure node in the
+   demo-repo check that the oracle does not have.
+10. **Overrides do not change resolution in the graph.** `DEPENDS_ON` is the un-overridden tree, and
+    overrides are applied when computing status (`MITIGATED_BY_OVERRIDE`). In nested overrides
+    (`{"a": {"b": {"c": "1"}}}`), only the nearest scope (`b`) is recorded as `parent`.
 
 ## Model notes (researched 2026-10-15)
 

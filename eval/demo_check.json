@@ -1,0 +1,343 @@
+{
+  "incident": "npm-2025-09-08-chalk-debug",
+  "S": "2025-09-08T13:12:09.343Z",
+  "all_match": true,
+  "repos": [
+    {
+      "repo": "fallout-demo/billing-api",
+      "status": "RANGE_ADMITS_LOCK_SAFE",
+      "graph_exposed": true,
+      "oracle_exposed": true,
+      "graph_packages": [
+        "debug"
+      ],
+      "graph_mitigated_packages": [],
+      "oracle_packages": [
+        "debug"
+      ],
+      "path_hops_missing_from_oracle_tree": [],
+      "bfs_hop": 4,
+      "shortest_path_cross_check": [
+        {
+          "package": "debug",
+          "path": 4,
+          "sp": 4
+        }
+      ],
+      "unknown_specs": 0,
+      "closure_vs_oracle_tree": {
+        "graph_only": 2,
+        "oracle_only": 0,
+        "both": 152,
+        "jaccard": 0.987,
+        "graph_only_keys": [
+          "npm:@types/pg@8.15.5",
+          "npm:qs@6.14.0"
+        ],
+        "oracle_only_keys": []
+      },
+      "oracle_reference_paths": [
+        "@sentry/node@8.55.0 > @opentelemetry/instrumentation@0.57.2 > require-in-the-middle@7.5.2 > debug@4.4.1"
+      ],
+      "match": true
+    },
+    {
+      "repo": "fallout-demo/cli-tool",
+      "status": "EXPOSED_NO_LOCKFILE",
+      "graph_exposed": true,
+      "oracle_exposed": true,
+      "graph_packages": [
+        "ansi-regex",
+        "chalk",
+        "debug",
+        "strip-ansi"
+      ],
+      "graph_mitigated_packages": [],
+      "oracle_packages": [
+        "ansi-regex",
+        "chalk",
+        "debug",
+        "strip-ansi"
+      ],
+      "path_hops_missing_from_oracle_tree": [],
+      "bfs_hop": 1,
+      "shortest_path_cross_check": [
+        {
+          "package": "ansi-regex",
+          "path": 3,
+          "sp": 3
+        },
+        {
+          "package": "chalk",
+          "path": 1,
+          "sp": 1
+        },
+        {
+          "package": "debug",
+          "path": 1,
+          "sp": 1
+        },
+        {
+          "package": "strip-ansi",
+          "path": 2,
+          "sp": 2
+        }
+      ],
+      "unknown_specs": 0,
+      "closure_vs_oracle_tree": {
+        "graph_only": 0,
+        "oracle_only": 0,
+        "both": 21,
+        "jaccard": 1.0,
+        "graph_only_keys": [],
+        "oracle_only_keys": []
+      },
+      "oracle_reference_paths": [
+        "chalk@5.6.0",
+        "debug@4.4.1",
+        "ora@8.2.0 > chalk@5.6.0"
+      ],
+      "match": true
+    },
+    {
+      "repo": "fallout-demo/monorepo-tools",
+      "status": "RANGE_ADMITS_LOCK_SAFE",
+      "graph_exposed": true,
+      "oracle_exposed": true,
+      "graph_packages": [
+        "error-ex"
+      ],
+      "graph_mitigated_packages": [
+        "debug"
+      ],
+      "oracle_packages": [
+        "error-ex"
+      ],
+      "path_hops_missing_from_oracle_tree": [],
+      "bfs_hop": 2,
+      "shortest_path_cross_check": [
+        {
+          "package": "debug",
+          "path": 2,
+          "sp": 2
+        },
+        {
+          "package": "error-ex",
+          "path": 3,
+          "sp": 3
+        }
+      ],
+      "unknown_specs": 0,
+      "closure_vs_oracle_tree": {
+        "graph_only": 1,
+        "oracle_only": 1,
+        "both": 109,
+        "jaccard": 0.982,
+        "graph_only_keys": [
+          "npm:debug@4.4.1"
+        ],
+        "oracle_only_keys": [
+          "npm:debug@4.3.7"
+        ]
+      },
+      "oracle_reference_paths": [
+        "@monorepo-tools/config-loader@0.4.1 > cosmiconfig@9.0.0 > parse-json@5.2.0 > error-ex@1.3.2"
+      ],
+      "match": true
+    },
+    {
+      "repo": "fallout-demo/notify-worker",
+      "status": "NOT_AFFECTED",
+      "graph_exposed": false,
+      "oracle_exposed": false,
+      "graph_packages": [],
+      "graph_mitigated_packages": [],
+      "oracle_packages": [],
+      "path_hops_missing_from_oracle_tree": [],
+      "bfs_hop": null,
+      "shortest_path_cross_check": [],
+      "unknown_specs": 0,
+      "closure_vs_oracle_tree": {
+        "graph_only": 0,
+        "oracle_only": 0,
+        "both": 7,
+        "jaccard": 1.0,
+        "graph_only_keys": [],
+        "oracle_only_keys": []
+      },
+      "oracle_reference_paths": [],
+      "match": true
+    },
+    {
+      "repo": "fallout-demo/storefront-next",
+      "status": "LOCKED_MALICIOUS",
+      "graph_exposed": true,
+      "oracle_exposed": true,
+      "graph_packages": [
+        "ansi-regex",
+        "ansi-styles",
+        "debug",
+        "strip-ansi"
+      ],
+      "graph_mitigated_packages": [],
+      "oracle_packages": [
+        "ansi-regex",
+        "ansi-styles",
+        "debug",
+        "strip-ansi"
+      ],
+      "path_hops_missing_from_oracle_tree": [],
+      "bfs_hop": 2,
+      "shortest_path_cross_check": [
+        {
+          "package": "ansi-regex",
+          "path": 7,
+          "sp": 7
+        },
+        {
+          "package": "ansi-styles",
+          "path": 7,
+          "sp": 7
+        },
+        {
+          "package": "debug",
+          "path": 2,
+          "sp": 2
+        },
+        {
+          "package": "strip-ansi",
+          "path": 6,
+          "sp": 6
+        }
+      ],
+      "unknown_specs": 0,
+      "closure_vs_oracle_tree": {
+        "graph_only": 19,
+        "oracle_only": 0,
+        "both": 356,
+        "jaccard": 0.949,
+        "graph_only_keys": [
+          "npm:@eslint/config-array@0.21.0",
+          "npm:@eslint/config-helpers@0.3.1",
+          "npm:@eslint/core@0.15.2",
+          "npm:@eslint/eslintrc@3.3.1",
+          "npm:@eslint/js@9.35.0",
+          "npm:@eslint/object-schema@2.1.6",
+          "npm:@eslint/plugin-kit@0.3.5",
+          "npm:@humanfs/core@0.19.1",
+          "npm:@humanfs/node@0.16.7",
+          "npm:@humanwhocodes/retry@0.4.3",
+          "npm:@types/estree@1.0.8",
+          "npm:@types/json-schema@7.0.15",
+          "npm:eslint-scope@8.4.0",
+          "npm:eslint@9.35.0",
+          "npm:espree@10.4.0",
+          "npm:file-entry-cache@8.0.0",
+          "npm:flat-cache@4.0.1",
+          "npm:globals@14.0.0",
+          "npm:react@19.1.1"
+        ],
+        "oracle_only_keys": []
+      },
+      "oracle_reference_paths": [
+        "eslint@8.57.1 > debug@4.4.1",
+        "eslint@8.57.1 > @eslint/eslintrc@2.1.4 > debug@4.4.1",
+        "eslint@8.57.1 > @humanwhocodes/config-array@0.13.0 > debug@4.4.1"
+      ],
+      "match": true
+    },
+    {
+      "repo": "fallout-demo/vite-dashboard",
+      "status": "RANGE_ADMITS_LOCK_SAFE",
+      "graph_exposed": true,
+      "oracle_exposed": true,
+      "graph_packages": [
+        "ansi-regex",
+        "ansi-styles",
+        "debug",
+        "strip-ansi"
+      ],
+      "graph_mitigated_packages": [],
+      "oracle_packages": [
+        "ansi-regex",
+        "ansi-styles",
+        "debug",
+        "strip-ansi"
+      ],
+      "path_hops_missing_from_oracle_tree": [],
+      "bfs_hop": 3,
+      "shortest_path_cross_check": [
+        {
+          "package": "ansi-regex",
+          "path": 6,
+          "sp": 6
+        },
+        {
+          "package": "ansi-styles",
+          "path": 6,
+          "sp": 6
+        },
+        {
+          "package": "debug",
+          "path": 3,
+          "sp": 3
+        },
+        {
+          "package": "strip-ansi",
+          "path": 5,
+          "sp": 5
+        }
+      ],
+      "unknown_specs": 0,
+      "closure_vs_oracle_tree": {
+        "graph_only": 34,
+        "oracle_only": 0,
+        "both": 180,
+        "jaccard": 0.841,
+        "graph_only_keys": [
+          "npm:@esbuild/aix-ppc64@0.25.9",
+          "npm:@esbuild/android-arm64@0.25.9",
+          "npm:@esbuild/android-arm@0.25.9",
+          "npm:@esbuild/android-x64@0.25.9",
+          "npm:@esbuild/darwin-arm64@0.25.9",
+          "npm:@esbuild/darwin-x64@0.25.9",
+          "npm:@esbuild/freebsd-arm64@0.25.9",
+          "npm:@esbuild/freebsd-x64@0.25.9",
+          "npm:@esbuild/linux-arm64@0.25.9",
+          "npm:@esbuild/linux-arm@0.25.9",
+          "npm:@esbuild/linux-ia32@0.25.9",
+          "npm:@esbuild/linux-loong64@0.25.9",
+          "npm:@esbuild/linux-mips64el@0.25.9",
+          "npm:@esbuild/linux-ppc64@0.25.9",
+          "npm:@esbuild/linux-riscv64@0.25.9",
+          "npm:@esbuild/linux-s390x@0.25.9",
+          "npm:@esbuild/linux-x64@0.25.9",
+          "npm:@esbuild/netbsd-arm64@0.25.9",
+          "npm:@esbuild/netbsd-x64@0.25.9",
+          "npm:@esbuild/openbsd-arm64@0.25.9",
+          "npm:@esbuild/openbsd-x64@0.25.9",
+          "npm:@esbuild/openharmony-arm64@0.25.9",
+          "npm:@esbuild/sunos-x64@0.25.9",
+          "npm:@esbuild/win32-arm64@0.25.9",
+          "npm:@esbuild/win32-ia32@0.25.9",
+          "npm:@esbuild/win32-x64@0.25.9",
+          "npm:esbuild@0.25.9",
+          "npm:fdir@6.5.0",
+          "npm:picomatch@4.0.3",
+          "npm:react-dom@19.1.1",
+          "npm:react@19.1.1",
+          "npm:scheduler@0.26.0",
+          "npm:tinyglobby@0.2.15",
+          "npm:vite@7.1.5"
+        ],
+        "oracle_only_keys": []
+      },
+      "oracle_reference_paths": [
+        "@vitejs/plugin-react@4.7.0 > @babel/core@7.28.4 > debug@4.4.1",
+        "@vitejs/plugin-react@4.7.0 > @babel/core@7.28.4 > @babel/traverse@7.28.4 > debug@4.4.1",
+        "rimraf@5.0.10 > glob@10.4.5 > jackspeak@3.4.3 > @isaacs/cliui@8.0.2 > strip-ansi@7.1.0"
+      ],
+      "match": true
+    }
+  ]
+}
