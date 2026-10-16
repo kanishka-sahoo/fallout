@@ -257,7 +257,7 @@ async def delete_simulation(
     if open_prs:
         require_user(fallout_session)
         for p in open_prs:
-            out = await anyio.to_thread.run_sync(lambda p=p: close_one(p["pr_url"]))
+            out = await anyio.to_thread.run_sync(close_one, p["pr_url"])
             forget_events(p["pr_url"], out["plan_id"], out["branch"])
     try:
         await anyio.to_thread.run_sync(lambda: simulate.delete(incident))

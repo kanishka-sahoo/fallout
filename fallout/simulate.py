@@ -327,7 +327,7 @@ def response_plan(incident: str) -> dict[str, Any]:
             if f.get("version"):
                 safe[f["package"]] = f["version"]
 
-    actions = defaultdict(int)
+    actions: defaultdict[str, int] = defaultdict(int)
     for r in repos:
         if r["status"] in NEEDS_ACTION:
             actions[r["status"]] += 1
