@@ -1,0 +1,39 @@
+{
+ "S": "2025-09-08T13:12:09.343Z",
+ "n_pairs": 300,
+ "n_units": 13,
+ "positives": 73,
+ "systems": [
+  "A",
+  "B",
+  "C",
+  "G"
+ ],
+ "skipped": {},
+ "model": "gpt-6-luna",
+ "reasoning_effort": "low",
+ "answer_schema": {
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+   "exposed": {
+    "type": "boolean"
+   },
+   "path": {
+    "type": "array",
+    "items": {
+     "type": "string"
+    },
+    "description": "name@version hops from the target's first dependency (for a package target: the target itself) down to the affected version; empty when not exposed"
+   }
+  },
+  "required": [
+   "exposed",
+   "path"
+  ]
+ },
+ "lock_budget_chars": 240000,
+ "seed": 42,
+ "note": "temperature is not settable on this reasoning model (DECISIONS D6); prompts logged verbatim",
+ "regraded_at": "2026-10-16T09:43:20.523376+00:00"
+}

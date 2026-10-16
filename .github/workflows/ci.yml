@@ -11,9 +11,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm ci  # the fix planner and grader call workers/semver-eval.mjs
+        working-directory: workers
       - run: uv sync
       - run: uv run ruff check .
-      - run: uv run mypy ingest fallout eval
+      - run: uv run mypy ingest fallout eval api mcp_server analysis
       - run: uv run pytest
   node:
     runs-on: ubuntu-latest

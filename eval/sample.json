@@ -1,0 +1,1261 @@
+{
+ "seed": 42,
+ "n": 300,
+ "positives": 73,
+ "per_unit": {
+  "braces-dos": {
+   "pos": 2,
+   "neg": 16
+  },
+  "chalk-debug": {
+   "pos": 68,
+   "neg": 21
+  },
+  "cross-spawn-redos": {
+   "pos": 0,
+   "neg": 15
+  },
+  "duckdb": {
+   "pos": 0,
+   "neg": 19
+  },
+  "event-stream-2018": {
+   "pos": 0,
+   "neg": 19
+  },
+  "form-data-random": {
+   "pos": 1,
+   "neg": 16
+  },
+  "lodash-cmd-injection": {
+   "pos": 0,
+   "neg": 16
+  },
+  "minimist-proto": {
+   "pos": 0,
+   "neg": 17
+  },
+  "rc-coa-2021": {
+   "pos": 1,
+   "neg": 18
+  },
+  "semver-redos": {
+   "pos": 1,
+   "neg": 17
+  },
+  "shai-hulud": {
+   "pos": 0,
+   "neg": 16
+  },
+  "ua-parser-js-2021": {
+   "pos": 0,
+   "neg": 18
+  },
+  "ws-dos": {
+   "pos": 0,
+   "neg": 19
+  }
+ },
+ "pairs": [
+  {
+   "unit": "braces-dos",
+   "target": "npm:@humanfs/node@0.16.7"
+  },
+  {
+   "unit": "braces-dos",
+   "target": "npm:@ice/spec@1.0.1"
+  },
+  {
+   "unit": "braces-dos",
+   "target": "npm:@jest/transform@30.1.2"
+  },
+  {
+   "unit": "braces-dos",
+   "target": "npm:@material/slider@14.0.0"
+  },
+  {
+   "unit": "braces-dos",
+   "target": "npm:@nx/rspack@21.4.1"
+  },
+  {
+   "unit": "braces-dos",
+   "target": "npm:@smithy/util-utf8@4.1.0"
+  },
+  {
+   "unit": "braces-dos",
+   "target": "npm:@tailwindcss/container-queries@0.1.1"
+  },
+  {
+   "unit": "braces-dos",
+   "target": "npm:@types/hammerjs@2.0.46"
+  },
+  {
+   "unit": "braces-dos",
+   "target": "npm:aos@2.3.4"
+  },
+  {
+   "unit": "braces-dos",
+   "target": "npm:coveralls@3.1.1"
+  },
+  {
+   "unit": "braces-dos",
+   "target": "npm:first-match@0.0.1"
+  },
+  {
+   "unit": "braces-dos",
+   "target": "npm:gulp-open@3.0.1"
+  },
+  {
+   "unit": "braces-dos",
+   "target": "npm:is-node-process@1.2.0"
+  },
+  {
+   "unit": "braces-dos",
+   "target": "npm:mime@4.0.7"
+  },
+  {
+   "unit": "braces-dos",
+   "target": "npm:optimize-css-assets-webpack-plugin@6.0.1"
+  },
+  {
+   "unit": "braces-dos",
+   "target": "npm:path-to-regexp@8.3.0"
+  },
+  {
+   "unit": "braces-dos",
+   "target": "npm:pg-promise@12.1.3"
+  },
+  {
+   "unit": "braces-dos",
+   "target": "npm:tiny-inflate@1.0.3"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:@actions/glob@0.5.0"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:@antfu/eslint-config@5.3.0"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:@apidevtools/json-schema-ref-parser@14.2.0"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:@azure/keyvault-common@2.0.0"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:@babel/helper-member-expression-to-functions@7.27.1"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:@babel/plugin-bugfix-safari-id-destructuring-collision-in-function-expression@7.27.1"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:@babel/plugin-syntax-class-static-block@7.14.5"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:@babel/plugin-transform-dotall-regex@7.27.1"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:@babel/plugin-transform-for-of@7.27.1"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:@babel/plugin-transform-nullish-coalescing-operator@7.27.1"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:@babel/plugin-transform-numeric-separator@7.27.1"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:@babel/plugin-transform-private-methods@7.27.1"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:@babel/plugin-transform-react-jsx-source@7.27.1"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:@babel/plugin-transform-typescript@7.28.0"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:@babel/preset-modules@0.1.6"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:@chakra-ui/editable@3.1.0"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:@chakra-ui/spinner@2.1.0"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:@graphql-inspector/commands@5.0.4"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:@heroui/theme@2.4.21"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:@ice/spec@1.0.1"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:@jest/transform@30.1.2"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:@lerna/publish@6.6.2"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:@messageformat/number-skeleton@1.2.0"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:@mui/material-nextjs@7.3.2"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:@nestjs/config@4.0.2"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:@nestjs/throttler@6.4.0"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:@nx/rspack@21.4.1"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:@opentelemetry/instrumentation-koa@0.51.0"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:@opentelemetry/sdk-node@0.204.0"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:@radix-ui/react-use-callback-ref@1.1.1"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:@salesforce/apex-node@8.2.13"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:@sanity/import@3.38.3"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:@storybook/addon-ondevice-controls@9.1.1"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:@storybook/react-vite@9.1.5"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:@storybook/vue3-vite@9.1.5"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:@sveltejs/adapter-auto@6.1.0"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:@svgr/babel-plugin-replace-jsx-attribute-value@8.0.0"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:@swc-node/register@1.11.1"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:@tamagui/web@1.132.23"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:@tokenizer/inflate@0.3.1"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:@turf/boolean-equal@7.2.0"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:@types/babel__traverse@7.28.0"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:@types/d3-brush@3.0.6"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:@types/pg-pool@2.0.6"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:@vitejs/plugin-react@5.0.2"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:@vue/cli-plugin-vuex@5.0.9"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:arr-diff@4.0.0"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:babel-plugin-polyfill-regenerator@0.6.5"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:body-parser@2.2.0"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:boxen@8.0.1"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:cookies-next@6.1.0"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:cypress-localstorage-commands@2.2.8"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:eslint-config-prettier@10.1.8"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:eslint-plugin-jsx-a11y@6.10.2"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:eslint-plugin-lit@2.1.1"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:eslint-plugin-no-unsanitized@4.1.4"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:fbjs@3.0.5"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:finalhandler@2.1.0"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:google-gax@5.0.3"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:graphql@16.11.0"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:gulp-open@3.0.1"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:jackspeak@4.1.1"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:listr2@9.0.3"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:lodash._shimkeys@2.4.1"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:mdast-util-gfm-strikethrough@2.0.0"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:mermaid@11.11.0"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:metro-source-map@0.83.1"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:mjml@4.15.3"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:mnemonist@0.40.3"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:multicodec@3.2.1"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:p-map@7.0.3"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:postcss-loader@8.2.0"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:postcss-normalize-display-values@7.0.1"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:proxy@2.2.0"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:react-native-keyboard-controller@1.18.6"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:renderkid@3.0.0"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:safe-regex-test@1.1.0"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:sequelize-typescript@2.1.6"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:storybook@9.1.5"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:symbol-observable@4.0.0"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:ts-jest@29.4.1"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:vite-plugin-static-copy@3.1.2"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "npm:wrangler@4.34.0"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "repo:fallout-demo/billing-api"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "repo:fallout-demo/cli-tool"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "repo:fallout-demo/monorepo-tools"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "repo:fallout-demo/notify-worker"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "repo:fallout-demo/storefront-next"
+  },
+  {
+   "unit": "chalk-debug",
+   "target": "repo:fallout-demo/vite-dashboard"
+  },
+  {
+   "unit": "cross-spawn-redos",
+   "target": "npm:@inquirer/number@3.0.18"
+  },
+  {
+   "unit": "cross-spawn-redos",
+   "target": "npm:@intlify/vue-i18n-extensions@8.0.0"
+  },
+  {
+   "unit": "cross-spawn-redos",
+   "target": "npm:@opentelemetry/exporter-metrics-otlp-proto@0.204.0"
+  },
+  {
+   "unit": "cross-spawn-redos",
+   "target": "npm:@opentelemetry/resource-detector-aws@2.3.0"
+  },
+  {
+   "unit": "cross-spawn-redos",
+   "target": "npm:@radix-ui/react-use-layout-effect@1.1.1"
+  },
+  {
+   "unit": "cross-spawn-redos",
+   "target": "npm:@shikijs/themes@3.12.2"
+  },
+  {
+   "unit": "cross-spawn-redos",
+   "target": "npm:@types/mdurl@2.0.0"
+  },
+  {
+   "unit": "cross-spawn-redos",
+   "target": "npm:@zag-js/store@1.22.1"
+  },
+  {
+   "unit": "cross-spawn-redos",
+   "target": "npm:JSONStream@1.3.5"
+  },
+  {
+   "unit": "cross-spawn-redos",
+   "target": "npm:bin-version-check@5.1.0"
+  },
+  {
+   "unit": "cross-spawn-redos",
+   "target": "npm:core-js-pure@3.45.1"
+  },
+  {
+   "unit": "cross-spawn-redos",
+   "target": "npm:multicodec@3.2.1"
+  },
+  {
+   "unit": "cross-spawn-redos",
+   "target": "npm:postcss-normalize-url@7.0.1"
+  },
+  {
+   "unit": "cross-spawn-redos",
+   "target": "npm:react-syntax-highlighter@15.6.6"
+  },
+  {
+   "unit": "cross-spawn-redos",
+   "target": "npm:yaml-ast-parser@0.0.43"
+  },
+  {
+   "unit": "duckdb",
+   "target": "npm:@babel/preset-stage-0@7.8.3"
+  },
+  {
+   "unit": "duckdb",
+   "target": "npm:@inquirer/select@4.3.2"
+  },
+  {
+   "unit": "duckdb",
+   "target": "npm:@messageformat/number-skeleton@1.2.0"
+  },
+  {
+   "unit": "duckdb",
+   "target": "npm:@turf/boolean-equal@7.2.0"
+  },
+  {
+   "unit": "duckdb",
+   "target": "npm:acorn-import-assertions@1.9.0"
+  },
+  {
+   "unit": "duckdb",
+   "target": "npm:array.prototype.map@1.0.8"
+  },
+  {
+   "unit": "duckdb",
+   "target": "npm:asn1js@3.0.6"
+  },
+  {
+   "unit": "duckdb",
+   "target": "npm:bin-version-check@5.1.0"
+  },
+  {
+   "unit": "duckdb",
+   "target": "npm:dequal@2.0.3"
+  },
+  {
+   "unit": "duckdb",
+   "target": "npm:git-describe@4.1.1"
+  },
+  {
+   "unit": "duckdb",
+   "target": "npm:glob-to-regexp@0.4.1"
+  },
+  {
+   "unit": "duckdb",
+   "target": "npm:is2@2.0.9"
+  },
+  {
+   "unit": "duckdb",
+   "target": "npm:node-abi@4.14.0"
+  },
+  {
+   "unit": "duckdb",
+   "target": "npm:os-tmpdir@1.0.2"
+  },
+  {
+   "unit": "duckdb",
+   "target": "npm:playwright@1.55.0"
+  },
+  {
+   "unit": "duckdb",
+   "target": "npm:recast@0.23.11"
+  },
+  {
+   "unit": "duckdb",
+   "target": "npm:snapdragon@0.12.1"
+  },
+  {
+   "unit": "duckdb",
+   "target": "npm:sort-keys@6.0.0"
+  },
+  {
+   "unit": "duckdb",
+   "target": "npm:unique-slug@5.0.0"
+  },
+  {
+   "unit": "event-stream-2018",
+   "target": "npm:@babel/helper-string-parser@7.27.1"
+  },
+  {
+   "unit": "event-stream-2018",
+   "target": "npm:@babel/plugin-transform-typescript@7.28.0"
+  },
+  {
+   "unit": "event-stream-2018",
+   "target": "npm:@graphql-codegen/plugin-helpers@6.0.0"
+  },
+  {
+   "unit": "event-stream-2018",
+   "target": "npm:@oxc-project/types@0.87.0"
+  },
+  {
+   "unit": "event-stream-2018",
+   "target": "npm:@radix-ui/react-use-layout-effect@1.1.1"
+  },
+  {
+   "unit": "event-stream-2018",
+   "target": "npm:@tailwindcss/oxide@4.1.13"
+  },
+  {
+   "unit": "event-stream-2018",
+   "target": "npm:@types/promise.allsettled@1.0.6"
+  },
+  {
+   "unit": "event-stream-2018",
+   "target": "npm:@webassemblyjs/helper-api-error@1.14.1"
+  },
+  {
+   "unit": "event-stream-2018",
+   "target": "npm:assistant-stream@0.2.23"
+  },
+  {
+   "unit": "event-stream-2018",
+   "target": "npm:base64id@2.0.0"
+  },
+  {
+   "unit": "event-stream-2018",
+   "target": "npm:has-bigints@1.1.0"
+  },
+  {
+   "unit": "event-stream-2018",
+   "target": "npm:iobuffer@6.0.1"
+  },
+  {
+   "unit": "event-stream-2018",
+   "target": "npm:js-base64@3.7.8"
+  },
+  {
+   "unit": "event-stream-2018",
+   "target": "npm:jws@4.0.0"
+  },
+  {
+   "unit": "event-stream-2018",
+   "target": "npm:rusha@0.8.14"
+  },
+  {
+   "unit": "event-stream-2018",
+   "target": "npm:scheduler@0.26.0"
+  },
+  {
+   "unit": "event-stream-2018",
+   "target": "npm:storybook@9.1.5"
+  },
+  {
+   "unit": "event-stream-2018",
+   "target": "npm:terser-webpack-plugin@5.3.14"
+  },
+  {
+   "unit": "event-stream-2018",
+   "target": "npm:unique-slug@5.0.0"
+  },
+  {
+   "unit": "form-data-random",
+   "target": "npm:@chakra-ui/editable@3.1.0"
+  },
+  {
+   "unit": "form-data-random",
+   "target": "npm:@graphql-codegen/plugin-helpers@6.0.0"
+  },
+  {
+   "unit": "form-data-random",
+   "target": "npm:@internationalized/number@3.6.5"
+  },
+  {
+   "unit": "form-data-random",
+   "target": "npm:@speed-highlight/core@1.2.7"
+  },
+  {
+   "unit": "form-data-random",
+   "target": "npm:@storybook/react-vite@9.1.5"
+  },
+  {
+   "unit": "form-data-random",
+   "target": "npm:@types/mdurl@2.0.0"
+  },
+  {
+   "unit": "form-data-random",
+   "target": "npm:@types/pg-pool@2.0.6"
+  },
+  {
+   "unit": "form-data-random",
+   "target": "npm:bin-version-check@5.1.0"
+  },
+  {
+   "unit": "form-data-random",
+   "target": "npm:conventional-commits-parser@6.2.0"
+  },
+  {
+   "unit": "form-data-random",
+   "target": "npm:coveralls@3.1.1"
+  },
+  {
+   "unit": "form-data-random",
+   "target": "npm:defer-to-connect@2.0.1"
+  },
+  {
+   "unit": "form-data-random",
+   "target": "npm:mdast-util-gfm-autolink-literal@2.0.1"
+  },
+  {
+   "unit": "form-data-random",
+   "target": "npm:object-deep-merge@1.0.5"
+  },
+  {
+   "unit": "form-data-random",
+   "target": "npm:prop-types@15.8.1"
+  },
+  {
+   "unit": "form-data-random",
+   "target": "npm:siginfo@2.0.0"
+  },
+  {
+   "unit": "form-data-random",
+   "target": "npm:sqlstring@2.3.3"
+  },
+  {
+   "unit": "form-data-random",
+   "target": "npm:strnum@2.1.1"
+  },
+  {
+   "unit": "lodash-cmd-injection",
+   "target": "npm:@noble/ed25519@3.0.0"
+  },
+  {
+   "unit": "lodash-cmd-injection",
+   "target": "npm:@opentelemetry/sdk-logs@0.204.0"
+  },
+  {
+   "unit": "lodash-cmd-injection",
+   "target": "npm:@sanity/import@3.38.3"
+  },
+  {
+   "unit": "lodash-cmd-injection",
+   "target": "npm:@types/babel__traverse@7.28.0"
+  },
+  {
+   "unit": "lodash-cmd-injection",
+   "target": "npm:array-bounds@1.0.1"
+  },
+  {
+   "unit": "lodash-cmd-injection",
+   "target": "npm:atomically@2.0.3"
+  },
+  {
+   "unit": "lodash-cmd-injection",
+   "target": "npm:babel-plugin-polyfill-regenerator@0.6.5"
+  },
+  {
+   "unit": "lodash-cmd-injection",
+   "target": "npm:defer-to-connect@2.0.1"
+  },
+  {
+   "unit": "lodash-cmd-injection",
+   "target": "npm:klona@2.0.6"
+  },
+  {
+   "unit": "lodash-cmd-injection",
+   "target": "npm:lodash._shimkeys@2.4.1"
+  },
+  {
+   "unit": "lodash-cmd-injection",
+   "target": "npm:micromark-extension-gfm-strikethrough@2.1.0"
+  },
+  {
+   "unit": "lodash-cmd-injection",
+   "target": "npm:minipass-collect@2.0.1"
+  },
+  {
+   "unit": "lodash-cmd-injection",
+   "target": "npm:nan@2.23.0"
+  },
+  {
+   "unit": "lodash-cmd-injection",
+   "target": "npm:semver-compare@1.0.0"
+  },
+  {
+   "unit": "lodash-cmd-injection",
+   "target": "npm:swagger-ui-dist@5.28.1"
+  },
+  {
+   "unit": "lodash-cmd-injection",
+   "target": "npm:vscode-uri@3.1.0"
+  },
+  {
+   "unit": "minimist-proto",
+   "target": "npm:@babel/plugin-transform-private-methods@7.27.1"
+  },
+  {
+   "unit": "minimist-proto",
+   "target": "npm:@fluentui/react-tooltip@9.8.5"
+  },
+  {
+   "unit": "minimist-proto",
+   "target": "npm:@opentelemetry/sdk-logs@0.204.0"
+  },
+  {
+   "unit": "minimist-proto",
+   "target": "npm:@parcel/rust@2.15.4"
+  },
+  {
+   "unit": "minimist-proto",
+   "target": "npm:@swc/helpers@0.5.17"
+  },
+  {
+   "unit": "minimist-proto",
+   "target": "npm:@types/eslint@9.6.1"
+  },
+  {
+   "unit": "minimist-proto",
+   "target": "npm:bin-version-check@5.1.0"
+  },
+  {
+   "unit": "minimist-proto",
+   "target": "npm:css-box-shadow@1.0.0-3"
+  },
+  {
+   "unit": "minimist-proto",
+   "target": "npm:des.js@1.1.0"
+  },
+  {
+   "unit": "minimist-proto",
+   "target": "npm:getpass@0.1.7"
+  },
+  {
+   "unit": "minimist-proto",
+   "target": "npm:gulp-open@3.0.1"
+  },
+  {
+   "unit": "minimist-proto",
+   "target": "npm:jest-environment-node@30.1.2"
+  },
+  {
+   "unit": "minimist-proto",
+   "target": "npm:klona@2.0.6"
+  },
+  {
+   "unit": "minimist-proto",
+   "target": "npm:lil-http-terminator@1.2.3"
+  },
+  {
+   "unit": "minimist-proto",
+   "target": "npm:os-tmpdir@1.0.2"
+  },
+  {
+   "unit": "minimist-proto",
+   "target": "npm:pretty-bytes@7.0.1"
+  },
+  {
+   "unit": "minimist-proto",
+   "target": "npm:unist-util-position-from-estree@2.0.0"
+  },
+  {
+   "unit": "rc-coa-2021",
+   "target": "npm:@babel/plugin-transform-nullish-coalescing-operator@7.27.1"
+  },
+  {
+   "unit": "rc-coa-2021",
+   "target": "npm:@datadog/native-metrics@3.1.1"
+  },
+  {
+   "unit": "rc-coa-2021",
+   "target": "npm:@octokit/plugin-request-log@6.0.0"
+  },
+  {
+   "unit": "rc-coa-2021",
+   "target": "npm:@opencode-ai/plugin@0.6.5"
+  },
+  {
+   "unit": "rc-coa-2021",
+   "target": "npm:@stdlib/number-float64-base-to-words@0.2.2"
+  },
+  {
+   "unit": "rc-coa-2021",
+   "target": "npm:@types/d3-brush@3.0.6"
+  },
+  {
+   "unit": "rc-coa-2021",
+   "target": "npm:@vitest/mocker@3.2.4"
+  },
+  {
+   "unit": "rc-coa-2021",
+   "target": "npm:@vue/tsconfig@0.8.1"
+  },
+  {
+   "unit": "rc-coa-2021",
+   "target": "npm:array.prototype.findlast@1.2.5"
+  },
+  {
+   "unit": "rc-coa-2021",
+   "target": "npm:canvg@4.0.3"
+  },
+  {
+   "unit": "rc-coa-2021",
+   "target": "npm:mixin-object@3.0.0"
+  },
+  {
+   "unit": "rc-coa-2021",
+   "target": "npm:prebuild-install@7.1.3"
+  },
+  {
+   "unit": "rc-coa-2021",
+   "target": "npm:pretty-bytes@7.0.1"
+  },
+  {
+   "unit": "rc-coa-2021",
+   "target": "npm:proxy-from-env@1.1.0"
+  },
+  {
+   "unit": "rc-coa-2021",
+   "target": "npm:recast@0.23.11"
+  },
+  {
+   "unit": "rc-coa-2021",
+   "target": "npm:ripemd160@2.0.2"
+  },
+  {
+   "unit": "rc-coa-2021",
+   "target": "npm:rusha@0.8.14"
+  },
+  {
+   "unit": "rc-coa-2021",
+   "target": "npm:siginfo@2.0.0"
+  },
+  {
+   "unit": "rc-coa-2021",
+   "target": "npm:terser-webpack-plugin@5.3.14"
+  },
+  {
+   "unit": "semver-redos",
+   "target": "npm:@lerna/publish@6.6.2"
+  },
+  {
+   "unit": "semver-redos",
+   "target": "npm:@sentry/angular@10.10.0"
+  },
+  {
+   "unit": "semver-redos",
+   "target": "npm:@types/babel__traverse@7.28.0"
+  },
+  {
+   "unit": "semver-redos",
+   "target": "npm:@vladfrangu/async_event_emitter@2.4.6"
+  },
+  {
+   "unit": "semver-redos",
+   "target": "npm:bytestreamjs@2.0.1"
+  },
+  {
+   "unit": "semver-redos",
+   "target": "npm:expand-brackets@4.0.0"
+  },
+  {
+   "unit": "semver-redos",
+   "target": "npm:fast-json-stable-stringify@2.1.0"
+  },
+  {
+   "unit": "semver-redos",
+   "target": "npm:hyphenate-style-name@1.1.0"
+  },
+  {
+   "unit": "semver-redos",
+   "target": "npm:livereload@0.10.3"
+  },
+  {
+   "unit": "semver-redos",
+   "target": "npm:matcher@5.0.0"
+  },
+  {
+   "unit": "semver-redos",
+   "target": "npm:object-deep-merge@1.0.5"
+  },
+  {
+   "unit": "semver-redos",
+   "target": "npm:quick-temp@0.1.8"
+  },
+  {
+   "unit": "semver-redos",
+   "target": "npm:styled-components@6.1.19"
+  },
+  {
+   "unit": "semver-redos",
+   "target": "npm:symbol-observable@4.0.0"
+  },
+  {
+   "unit": "semver-redos",
+   "target": "npm:terser-webpack-plugin@5.3.14"
+  },
+  {
+   "unit": "semver-redos",
+   "target": "npm:typescript-event-target@1.1.1"
+  },
+  {
+   "unit": "semver-redos",
+   "target": "npm:uint8array-extras@1.5.0"
+  },
+  {
+   "unit": "semver-redos",
+   "target": "npm:webpack-retry-chunk-load-plugin@3.1.1"
+  },
+  {
+   "unit": "shai-hulud",
+   "target": "npm:@jest/transform@30.1.2"
+  },
+  {
+   "unit": "shai-hulud",
+   "target": "npm:@jest/types@30.0.5"
+  },
+  {
+   "unit": "shai-hulud",
+   "target": "npm:@npmcli/fs@4.0.0"
+  },
+  {
+   "unit": "shai-hulud",
+   "target": "npm:@octokit/graphql-schema@15.26.0"
+  },
+  {
+   "unit": "shai-hulud",
+   "target": "npm:@tailwindcss/container-queries@0.1.1"
+  },
+  {
+   "unit": "shai-hulud",
+   "target": "npm:@tsconfig/node14@14.1.5"
+  },
+  {
+   "unit": "shai-hulud",
+   "target": "npm:@turf/boolean-equal@7.2.0"
+  },
+  {
+   "unit": "shai-hulud",
+   "target": "npm:create-hash@1.2.0"
+  },
+  {
+   "unit": "shai-hulud",
+   "target": "npm:define-lazy-prop@3.0.0"
+  },
+  {
+   "unit": "shai-hulud",
+   "target": "npm:glob-to-regexp@0.4.1"
+  },
+  {
+   "unit": "shai-hulud",
+   "target": "npm:html-to-text@9.0.5"
+  },
+  {
+   "unit": "shai-hulud",
+   "target": "npm:is-builtin-module@5.0.0"
+  },
+  {
+   "unit": "shai-hulud",
+   "target": "npm:pg-promise@12.1.3"
+  },
+  {
+   "unit": "shai-hulud",
+   "target": "npm:picocolors@1.1.1"
+  },
+  {
+   "unit": "shai-hulud",
+   "target": "npm:redux-devtools@3.7.0"
+  },
+  {
+   "unit": "shai-hulud",
+   "target": "npm:tiny-warning@1.0.3"
+  },
+  {
+   "unit": "ua-parser-js-2021",
+   "target": "npm:@chakra-ui/spinner@2.1.0"
+  },
+  {
+   "unit": "ua-parser-js-2021",
+   "target": "npm:@ide/backoff@1.0.0"
+  },
+  {
+   "unit": "ua-parser-js-2021",
+   "target": "npm:@jridgewell/resolve-uri@3.1.2"
+  },
+  {
+   "unit": "ua-parser-js-2021",
+   "target": "npm:@noble/ed25519@3.0.0"
+  },
+  {
+   "unit": "ua-parser-js-2021",
+   "target": "npm:@opencode-ai/sdk@0.6.5"
+  },
+  {
+   "unit": "ua-parser-js-2021",
+   "target": "npm:@opentelemetry/exporter-logs-otlp-http@0.204.0"
+  },
+  {
+   "unit": "ua-parser-js-2021",
+   "target": "npm:@sindresorhus/is@7.0.2"
+  },
+  {
+   "unit": "ua-parser-js-2021",
+   "target": "npm:@types/trusted-types@2.0.7"
+  },
+  {
+   "unit": "ua-parser-js-2021",
+   "target": "npm:assistant-stream@0.2.23"
+  },
+  {
+   "unit": "ua-parser-js-2021",
+   "target": "npm:cacheable@1.10.4"
+  },
+  {
+   "unit": "ua-parser-js-2021",
+   "target": "npm:detect-node@2.1.0"
+  },
+  {
+   "unit": "ua-parser-js-2021",
+   "target": "npm:eslint-plugin-lit@2.1.1"
+  },
+  {
+   "unit": "ua-parser-js-2021",
+   "target": "npm:fastest-levenshtein@1.0.16"
+  },
+  {
+   "unit": "ua-parser-js-2021",
+   "target": "npm:file-uri-to-path@2.0.0"
+  },
+  {
+   "unit": "ua-parser-js-2021",
+   "target": "npm:is-buffer@2.0.5"
+  },
+  {
+   "unit": "ua-parser-js-2021",
+   "target": "npm:postcss-calc@10.1.1"
+  },
+  {
+   "unit": "ua-parser-js-2021",
+   "target": "npm:recast@0.23.11"
+  },
+  {
+   "unit": "ua-parser-js-2021",
+   "target": "npm:stop-iteration-iterator@1.1.0"
+  },
+  {
+   "unit": "ws-dos",
+   "target": "npm:@fastify/ajv-compiler@4.0.2"
+  },
+  {
+   "unit": "ws-dos",
+   "target": "npm:@mui/material-nextjs@7.3.2"
+  },
+  {
+   "unit": "ws-dos",
+   "target": "npm:@opentelemetry/resource-detector-aws@2.3.0"
+  },
+  {
+   "unit": "ws-dos",
+   "target": "npm:@sanity/webhook@4.0.4"
+  },
+  {
+   "unit": "ws-dos",
+   "target": "npm:@tamagui/web@1.132.23"
+  },
+  {
+   "unit": "ws-dos",
+   "target": "npm:bin-version-check@5.1.0"
+  },
+  {
+   "unit": "ws-dos",
+   "target": "npm:body-parser@2.2.0"
+  },
+  {
+   "unit": "ws-dos",
+   "target": "npm:boxen@8.0.1"
+  },
+  {
+   "unit": "ws-dos",
+   "target": "npm:core-js-pure@3.45.1"
+  },
+  {
+   "unit": "ws-dos",
+   "target": "npm:diff-sequences@29.6.3"
+  },
+  {
+   "unit": "ws-dos",
+   "target": "npm:eslint-plugin-lit@2.1.1"
+  },
+  {
+   "unit": "ws-dos",
+   "target": "npm:funpermaproxy@1.1.0"
+  },
+  {
+   "unit": "ws-dos",
+   "target": "npm:helmet@8.1.0"
+  },
+  {
+   "unit": "ws-dos",
+   "target": "npm:is-promise@4.0.0"
+  },
+  {
+   "unit": "ws-dos",
+   "target": "npm:jws@4.0.0"
+  },
+  {
+   "unit": "ws-dos",
+   "target": "npm:mini-css-extract-plugin@2.9.4"
+  },
+  {
+   "unit": "ws-dos",
+   "target": "npm:raf@3.4.1"
+  },
+  {
+   "unit": "ws-dos",
+   "target": "npm:type-check@0.4.0"
+  },
+  {
+   "unit": "ws-dos",
+   "target": "repo:fallout-demo/storefront-next"
+  }
+ ]
+}

@@ -16,7 +16,7 @@ from typing import Any
 
 from falkordb import Graph
 
-from fallout.db import batches, graph, query
+from fallout.db import batches, graph, query, rows
 from fallout.settings import SETTINGS
 
 LOCKED_MALICIOUS = "LOCKED_MALICIOUS"
@@ -24,12 +24,6 @@ NOT_AFFECTED = "NOT_AFFECTED"
 MITIGATED_BY_OVERRIDE = "MITIGATED_BY_OVERRIDE"
 EXPOSED_NO_LOCKFILE = "EXPOSED_NO_LOCKFILE"
 RANGE_ADMITS_LOCK_SAFE = "RANGE_ADMITS_LOCK_SAFE"
-
-
-def rows(g: Graph, name: str, params: dict[str, Any]) -> list[dict[str, Any]]:
-    res = g.query(query(name), params)
-    cols = [h[1] if isinstance(h, list | tuple) else h for h in res.header]
-    return [dict(zip(cols, r, strict=True)) for r in res.result_set]
 
 
 @dataclass(frozen=True)
@@ -99,10 +93,13 @@ def path_id(nodes: Iterable[str]) -> str:
     return "p_" + hashlib.sha1("|".join(nodes).encode()).hexdigest()[:10]
 
 
-def exposure_path(g: Graph, incident: str, repo: str, affected: Affected) -> dict[str, Any] | None:
-    """Walk the EXPOSES.via parent pointers from `repo` back to an affected version."""
+def exposure_path(
+    g: Graph, incident: str, repo: str, affected: Affected, kind: str = "repo"
+) -> dict[str, Any] | None:
+    """Walk the EXPOSES.via parent pointers from `repo` (or a Version key, kind="version")
+    back to an affected version."""
     nodes, edges = [repo], []
-    cur, kind = repo, "repo"
+    cur = repo
     while cur not in affected.keys:
         hit = rows(g, f"exposes_lookup_{kind}", {"key": cur, "incident": incident})
         if not hit or hit[0]["via"] is None:
@@ -325,6 +322,10 @@ def blast_radius(
     affected = Affected.load(g, incident)
     visited, truncated = bfs(g, incident, affected, max_hops, on_hop)
     persist(g, incident, visited)
+    g.query(
+        query("incident_blast_mark"),
+        {"incident": incident, "now": int(time.time() * 1000), "exposed": len(visited)},
+    )
 
     per_hop: dict[int, dict[str, int]] = defaultdict(lambda: {"versions": 0, "repos": 0})
     for e in visited.values():

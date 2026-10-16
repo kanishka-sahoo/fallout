@@ -34,3 +34,8 @@ test('maxSatisfying picks the highest affected version the range admits', () => 
   assert.equal(max('>=1', ['1.3.3', '1.29.2']), '1.29.2')
   assert.equal(max('^2', ['1.3.3']), null)
 })
+
+test('filter keeps the versions an OSV range covers', () => {
+  const r = evaluate({ op: 'filter', range: '>=0.0.0 <2.5.4 || >=3.0.0 <3.0.4', versions: ['2.3.3', '2.5.4', '3.0.3', '4.0.0', 'x'] })
+  assert.deepEqual(r.result, ['2.3.3', '3.0.3'])
+})

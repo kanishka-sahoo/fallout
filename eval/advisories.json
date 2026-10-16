@@ -1,0 +1,28 @@
+{
+  "_doc": "BUILD.md §8 advisory set. IDs were chosen by querying OSV (scratch/osv_pick.py); affected versions are always fetched from OSV at ingest, never hardcoded. Each unit is ingested as its own incident `eval-<unit>`.",
+  "units": [
+    {"unit": "chalk-debug", "title": "Sep 8 2025 chalk/debug account takeover (batch 1)", "kind": "MALICIOUS",
+     "advisories": ["MAL-2025-46967", "MAL-2025-46974", "MAL-2025-46969", "MAL-2025-46981", "MAL-2025-46980", "MAL-2025-46966", "MAL-2025-46983", "MAL-2025-46971", "MAL-2025-46972", "MAL-2025-46977", "MAL-2025-46979", "MAL-2025-46975", "MAL-2025-46985", "MAL-2025-46973", "MAL-2025-46978", "MAL-2025-46982", "MAL-2025-46976", "MAL-2025-46970", "MAL-2025-46968"]},
+    {"unit": "duckdb", "title": "Sep 9 2025 duckdb + proto-tinker-wc (batch 2)", "kind": "MALICIOUS",
+     "advisories": ["MAL-2025-46993", "MAL-2025-46991", "MAL-2025-46992", "MAL-2025-46994", "MAL-2025-46984"]},
+    {"unit": "shai-hulud", "title": "Shai-Hulud worm subset, mid-Sep 2025", "kind": "MALICIOUS",
+     "advisories": ["MAL-2025-47141", "MAL-2025-47197", "MAL-2025-47199", "MAL-2025-47172", "MAL-2025-47187"]},
+    {"unit": "ua-parser-js-2021", "title": "ua-parser-js embedded malware, Oct 2021", "kind": "MALICIOUS",
+     "advisories": ["GHSA-pjwm-rvh2-c87w"]},
+    {"unit": "rc-coa-2021", "title": "rc and coa embedded malware, Nov 2021", "kind": "MALICIOUS",
+     "advisories": ["GHSA-g2q5-5433-rhrf", "GHSA-73qr-pfmq-6rp8"]},
+    {"unit": "event-stream-2018", "title": "event-stream / flatmap-stream, Nov 2018", "kind": "MALICIOUS",
+     "advisories": ["GHSA-mh6f-8j2x-4483", "GHSA-9x64-5r7x-2q53"]},
+    {"unit": "lodash-cmd-injection", "title": "lodash command injection (<4.17.21)", "kind": "VULN",
+     "advisories": ["GHSA-35jh-r3h4-6jhm"]},
+    {"unit": "semver-redos", "title": "semver ReDoS", "kind": "VULN", "advisories": ["GHSA-c2qf-rxjj-qqgw"]},
+    {"unit": "braces-dos", "title": "braces uncontrolled resource consumption (<3.0.3)", "kind": "VULN",
+     "advisories": ["GHSA-grv7-fg5c-xmjg"]},
+    {"unit": "minimist-proto", "title": "minimist prototype pollution", "kind": "VULN",
+     "advisories": ["GHSA-xvch-5gv4-984h"]},
+    {"unit": "form-data-random", "title": "form-data unsafe boundary randomness (Jul 2025)", "kind": "VULN",
+     "advisories": ["GHSA-fjxv-7rqg-78g4"]},
+    {"unit": "cross-spawn-redos", "title": "cross-spawn ReDoS", "kind": "VULN", "advisories": ["GHSA-3xgq-45jj-v275"]},
+    {"unit": "ws-dos", "title": "ws DoS with many HTTP headers", "kind": "VULN", "advisories": ["GHSA-3h5v-q93c-6h6q"]}
+  ]
+}

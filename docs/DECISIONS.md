@@ -17,6 +17,29 @@ known approximation. The README's Limitations section is generated from this fil
 | D8 | §7.5: gather a repo's reachable affected packages with `[:DIRECT_DEP\|DEPENDS_ON*0..12]` | Walk the repo's resolved closure hop by hop from Python (`fallout/blast.py::Closure`), then read its `CAN_RESOLVE_TO` edges in one query | A variable-length pattern enumerates paths, not nodes, so it blows up on diamond-shaped trees. The closure walk is linear and its adjacency also gives the override-coverage check and the per-package paths. |
 | D9 | §7.4: one path per repo, from `EXPOSES.via` | The `via` path is kept, and each repo also gets `paths_by_package`: the shortest closure path to every affected package it reaches, preferring a route that no scoped override covers | The `via` path can run through a package an override already mitigates (e.g. `monorepo-tools` → `eslint` → `debug`), which hides why the repo is still exposed (`error-ex`). `plan_fix` needs every affected package anyway. |
 | D10 | §5.0 oracle rule "admits" | Unchanged in `oracle.mjs`, checked equal to D1 | Each malicious release was tagged `latest` and was the newest version, so "admits" ⇔ "would pick". Measured on the loaded graph: both rules give the same 790 `CAN_RESOLVE_TO` edges. |
+| D11 | §8 targets: demo repos + 200 random seeds | Demo repos + 200 uniform seeds (seed 42) + 300 seeds drawn from the top 3,000 by weekly downloads (seed 43), each tagged with its `stratum` in `eval/dataset.json` | Uniform seeds are mostly leaf packages; only 40 of 2,613 pairs were positive, so the ~40% positive share was unreachable. Download rank does not depend on any exposure label, so the extra stratum adds positives without favouring the graph. |
+| D12 | §6.3 step 1: global `overrides: {P: v}`, scoped when ranges conflict | **Selector overrides** `{"P@<affected>": v}`. A direct dependency on P is pinned in the manifest instead. Scoped overrides are kept as the fallback | Arborist applies a keyed rule only to edges whose spec intersects the key (`override-set.js` `getEdgeRule`), so the rule rewrites exactly the edges that admit the malicious version. A plain global override would also force unrelated edges (`debug@^3.2.7` → 4.x), and conflicting ranges produced nine scoped entries for storefront-next. npm rejects an override that changes a root dependency (EOVERRIDE), and a pin never intersects the selector. |
+| D13 | §4.1 schema | Adds `Plan {id, repo, incident, status, body}` and `(Plan)-[:FOR]->(Repo)` | Plans have to outlive the MCP server process. The approval endpoint and the executor read them from the graph, with compare-and-set status transitions. |
+| D14 | §6.3 step 2: run `npm install --package-lock-only` on the checkout | The sandbox first removes lockfile entries at affected versions | npm keeps a locked node that still satisfies some edge instead of re-applying overrides: the LOCKED_MALICIOUS fixture's hoisted `debug@4.4.2` survived `"debug@4.4.2": "4.4.1"`. The removed entries are listed in the verification output and in the PR body. |
+| D15 | §6.1 any tool-calling LLM | `fallout/llm.py`: OpenAI Responses API, plus `OfflineLLM`, a keyword-routed scripted planner used only when `OPENAI_API_KEY` is unset | Lets the demo and the plumbing run headless before the key exists. Every offline answer starts with `[offline mode: scripted planner, no LLM]`, and the eval refuses to use it. |
+| D16 | §5.3 malicious = `MAL-` | A GHSA record whose summary says malware/malicious counts as malicious, and an eval unit can override the kind (GHSA-mh6f-8j2x-4483, event-stream, does not say so). An unpublished malicious version without a registry time falls back to the advisory's OSV publish time | The 2018/2021 incidents were published as GHSA, not MAL. |
+| D17 | §5.3 affected versions from OSV | When OSV gives ranges only (most GHSA records), they are expanded against the registry packument with npm semver (`semver-eval.mjs` `filter`). Vulnerable versions published after S are dropped | They did not exist at S, and keeping them would break the anchor invariant. |
+| D18 | §6.2 `exposure_path(repo, incident_id)` | `exposure_path(incident_id, repo=None, package=None)`: the target can also be `name` (its version at S) or `name@version` | The eval's package targets need the same tool as the repos. |
+| D19 | §6.2 `blast_radius(max_hops=8)` | Default 16 | The replay reaches hop 10, and the eval's cross-spawn unit reaches hop 13. `truncated` is still reported. |
+
+## Eval protocol notes
+
+- **One instruction change after the first full run (2026-10-16), then a grading convention.**
+  System C's eval instructions said to copy the tool path "without the repo itself", and the
+  agent also dropped package targets from their own paths. The instruction was reworded and all
+  four systems were rerun (A F1 0.655, B 0.935, C 1.000, G 1.000; C path validity 87.7%: the
+  agent still dropped the first hop in 6 answers, all peer-dependency plugins). Rather than tune
+  the prompt further against the test set, the grader now applies one path convention to every
+  system (`eval/run.py` `normalize_path`): hops start below a repo, and at the target itself for
+  a package target, which is prepended when missing. The logged answers were rescored with
+  `--regrade`, with no new model calls. Each answer's original path is kept as `raw_path` in
+  `eval/runs/`. No labels or thresholds were tuned. First run, before either change: A F1
+  0.655, B 0.943, C 1.000 with path validity 91.8%, G 1.000 / 95.9%.
 
 ## Data-quality rules added during ingest
 
@@ -80,6 +103,16 @@ peer dependency or the `monorepo-tools` override (limitations 4 and 9).
 10. **Overrides do not change resolution in the graph.** `DEPENDS_ON` is the un-overridden tree, and
     overrides are applied when computing status (`MITIGATED_BY_OVERRIDE`). In nested overrides
     (`{"a": {"b": {"c": "1"}}}`), only the nearest scope (`b`) is recorded as `parent`.
+
+11. **Maintainer reach includes the account's own packages.** `reach_packages` counts every package
+    that transitively depends on (or is) a package the account maintains, over `PKG_DEPENDS_ON` at S.
+    The top 300 accounts by summed PageRank are scored (BUILD.md §7.7).
+12. **The approval session is a shared console key.** `POST /api/session` with `FALLOUT_CONSOLE_KEY`
+    sets an HMAC-signed HttpOnly cookie. Used-token tracking is in memory, so a restart forgets used
+    tokens; it also rotates the default HMAC secret, which invalidates them anyway.
+13. **Oracle targets that fail on this platform are excluded.** Arborist refuses platform-specific
+    binaries (`@biomejs/cli-darwin-arm64`, `esbuild-linux-s390x`, …) on linux-x64 (EBADPLATFORM).
+    They are listed under `oracle_failed` in `eval/dataset.json`.
 
 ## Model notes (researched 2026-10-15)
 

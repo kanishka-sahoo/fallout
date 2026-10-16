@@ -6,6 +6,7 @@
 // Input lines:
 //   {"id", "op": "maxSatisfying", "range", "versions": [...]}  -> {"id", "result": "4.4.2" | null}
 //   {"id", "op": "satisfies", "range", "version"}              -> {"id", "result": true | false}
+//   {"id", "op": "filter", "range", "versions": [...]}         -> {"id", "result": [...matching]}
 // A spec that is not a registry semver range (npm: alias, git, tarball, file:, dist-tag)
 // yields {"id", "result": "unknown", "reason"}. It is reported, never silently dropped.
 
@@ -29,6 +30,8 @@ export function evaluate (req) {
       return { result: semver.maxSatisfying(req.versions, c.spec) }
     case 'satisfies':
       return { result: semver.satisfies(req.version, c.spec) }
+    case 'filter':
+      return { result: req.versions.filter((v) => semver.valid(v) && semver.satisfies(v, c.spec)) }
     default:
       throw new Error(`unknown op: ${req.op}`)
   }
