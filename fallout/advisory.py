@@ -290,8 +290,21 @@ def ingest_advisory(
     advisory_ids: list[str], incident_id: str, title: str | None = None, kind: str | None = None
 ) -> AdvisoryReport:
     t0 = time.monotonic()
-    g = graph()
     advisories, affected = asyncio.run(fetch(advisory_ids, kind))
+    return write_incident(graph(), incident_id, title, advisories, affected, t0)
+
+
+def write_incident(
+    g: Any,
+    incident_id: str,
+    title: str | None,
+    advisories: list[dict[str, Any]],
+    affected: list[dict[str, Any]],
+    t0: float | None = None,
+) -> AdvisoryReport:
+    """Stores an incident with its advisories and affected versions, then computes its
+    CAN_RESOLVE_TO edges. Simulated incidents (fallout/simulate.py) use it too."""
+    t0 = t0 or time.monotonic()
     started = min((a["published_iso"] for a in affected if a["published_iso"]), default=None)
     g.query(
         query("incident_upsert"),

@@ -42,7 +42,7 @@ export type Plan = {
   body: {
     status_before: string
     changes: { pin: Record<string, { field: string; from: string; to: string }>; overrides: Record<string, unknown> }
-    packages: { package: string; strategy: string; version: string | null; reason: string }[]
+    packages: { package: string; strategy: string; version: string | null; reason: string; requirements?: { parent_name: string; requirement: string }[] }[]
     paths: (Path & { package: string })[]
   }
 }
@@ -82,9 +82,35 @@ async function req<T>(method: string, url: string, body?: unknown): Promise<T> {
   return r.json() as Promise<T>
 }
 
+export type Incident = { id: string; title: string; started_at: number | null; blast_at: number | null; exposed: number | null; simulated: boolean; scenario: string | null; created_at: number | null }
+
+export type PackageInfo = { name: string; downloads: number | null; dependents: number; maintainers: string[]; latest: string; versions: string[]; next: Record<'patch' | 'minor' | 'major', string> }
+
+export type ScenarioKind = 'release' | 'versions' | 'osv'
+export type ScenarioSpec = {
+  kind: ScenarioKind
+  title?: string
+  published_at?: string
+  packages?: { name: string; release?: 'patch' | 'minor' | 'major' | 'custom'; version?: string; range?: string }[]
+  advisories?: string[]
+}
+export type Scenario = { kind: ScenarioKind; versions: string[]; published_at: string | null; advisories: string[] | null }
+
+export type PlanBody = Plan['body'] & { fixable: boolean }
+export type ResponsePlan = {
+  incident: string
+  simulated: boolean
+  anchor_S: string
+  repos: { repo: string; status: string; plan: PlanBody | null; error?: string }[]
+  needs_action: number
+  by_status: Record<string, number>
+  overrides: Record<string, unknown>
+  safe_versions: Record<string, string>
+}
+
 export const api = {
   config: () => req<{ anchor: { S: string; incident: string }; incident: string; repos: string[]; llm: string }>('GET', '/api/config'),
-  incidents: () => req<{ id: string; title: string; started_at: number | null; blast_at: number | null; exposed: number | null }[]>('GET', '/api/incidents'),
+  incidents: () => req<Incident[]>('GET', '/api/incidents'),
   graph: (incident: string) => req<IncidentGraph>('GET', `/api/graph/${encodeURIComponent(incident)}`),
   replay: (incident: string) => req<{ ingest: any; blast: any }>('POST', `/api/replay/${encodeURIComponent(incident)}`),
   tool: <T = any>(name: string, args: Record<string, unknown>) => req<Envelope<T>>('POST', `/api/tools/${name}`, args),
@@ -93,9 +119,36 @@ export const api = {
   approve: (planId: string) => req<any>('POST', `/api/plans/${planId}/approve`),
   results: () => req<any>('GET', '/api/results'),
   reset: () => req<{ ok: boolean }>('POST', '/api/reset'),
+  searchPackages: (q: string) => req<{ name: string; downloads: number | null }[]>('GET', `/api/packages?q=${encodeURIComponent(q)}`),
+  packageInfo: (name: string) => req<PackageInfo>('GET', `/api/packages/${name}`),
+  matchingVersions: (name: string, range: string) => req<{ version: string; published_iso: string }[]>('GET', `/api/packages/${name}/versions?range=${encodeURIComponent(range)}`),
+  maintainerTemplate: () => req<{ maintainer: string; reach: number; packages: string[] }>('GET', '/api/templates/maintainer'),
+  simulate: (spec: ScenarioSpec) => req<{ incident: string; title: string; report: { edges: number; affected_versions: number }; blast: { exposed_versions: number } }>('POST', '/api/simulations', spec),
+  deleteSimulation: (id: string) => req<{ ok: boolean; closed_prs: number }>('DELETE', `/api/simulations/${encodeURIComponent(id)}`),
+  fix: (incident: string, repo: string) => req<FixResult>('POST', '/api/fix', { incident, repo }),
+  prs: (incident?: string) => req<PullRequest[]>('GET', `/api/prs${incident ? `?incident=${encodeURIComponent(incident)}` : ''}`),
+  closePr: (pr_url: string) => req<{ ok: boolean; repo: string; number: string; branch: string; plan_id: string | null }>('POST', '/api/prs/close', { pr_url }),
+  response: (incident: string) => req<ResponsePlan>('GET', `/api/response/${encodeURIComponent(incident)}`),
 }
 
-export type Socket = { send: (message: string) => void; close: () => void }
+export type PullRequest = { pr_url: string; number: number; repo: string; incident: string | null; plan_id: string | null; created_at: number; approved_by: string | null; state: 'open' | 'closed' | 'merged' | 'unknown' }
+export type FixResult = {
+  plan_id: string
+  result: 'PR_OPENED' | 'VERIFICATION_FAILED'
+  pr_url: string | null
+  verification: { ok: boolean; affected_found: string[]; took_ms: number }
+  recheck?: { result: { before?: { status: string }; after?: { status: string } } }
+}
+export const needsKey = (e: unknown) => String((e as Error)?.message ?? '').startsWith('401')
+
+export const isSimulated = (incident: string) => incident.startsWith('sim-')
+export const parseScenario = (i?: Incident): Scenario | null => {
+  try { return i?.scenario ? (JSON.parse(i.scenario) as Scenario) : null } catch { return null }
+}
+export const compact = (n: number | null | undefined) =>
+  n == null ? '—' : Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 }).format(n)
+
+export type Socket = { send: (message: string, incident?: string) => void; close: () => void }
 
 export function connect(onEvent: (e: LogEvent) => void, onHistory: (e: LogEvent[]) => void, onAnswer: (a: Answer) => void, onState: (open: boolean) => void): Socket {
   let ws: WebSocket | null = null
@@ -118,7 +171,7 @@ export function connect(onEvent: (e: LogEvent) => void, onHistory: (e: LogEvent[
   }
   open()
   return {
-    send: (message) => ws?.readyState === WebSocket.OPEN && ws.send(JSON.stringify({ type: 'chat', message })),
+    send: (message, incident) => ws?.readyState === WebSocket.OPEN && ws.send(JSON.stringify({ type: 'chat', message, incident })),
     close: () => { closed = true; ws?.close() },
   }
 }

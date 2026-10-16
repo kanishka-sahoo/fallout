@@ -14,7 +14,7 @@ its lockfile and its `overrides`. For each exposed repo, it shows the full path 
 range on each hop. When you approve a fix, Fallout regenerates the lockfile in a sandbox that has
 no secrets. It verifies that the malware is gone, and then it opens a pull request (PR).
 
-Built for Graph Hacks (FalkorDB), October 2026. Demo video: a captioned recording of the console
+Built for Graph Hacks (FalkorDB), October 2026. **Track: Agents That Act on Connected Data.** Demo video: a captioned recording of the console
 (`docs/media/fallout-demo.webm`, recorded with Playwright). The video is not in git. It is
 uploaded separately.
 
@@ -52,7 +52,12 @@ Notes on the results:
   peer dependency on its own, but npm reuses the version that is already installed (limitation 9
   in [docs/DECISIONS.md](docs/DECISIONS.md)). In these cases the verdict is correct, but one hop
   names a different version than npm would install.
-- G gives the same results as C. The agent adds no error to the graph results.
+- G gives the same results as C. The agent adds no error to the graph results. This is by
+  design: the graph is the source of truth, and the agent does not answer from its own knowledge.
+  The agent turns a question in plain English into the right tool calls, chains them (blast
+  radius, then exposure path, then repo status, then plan_fix), explains the result with cited
+  paths and requests approval for a fix. G needs a caller that already knows which tool to call
+  with which arguments.
 - The sample is 24% positive, not the planned 40%. By September 2025, most popular packages used
   versions newer than the older vulnerable versions. As a result, 68 of the 73 exposed pairs come from
   chalk/debug. The other advisory groups are mostly negatives, and all systems answer them
@@ -80,6 +85,38 @@ sandbox verified each fix, and a recheck changed each repo to `MITIGATED_BY_OVER
 [billing-api#1](https://github.com/fallout-demo/billing-api/pull/1),
 [cli-tool#1](https://github.com/fallout-demo/cli-tool/pull/1),
 [storefront-next#1](https://github.com/fallout-demo/storefront-next/pull/1).
+
+## Simulate an attack
+
+The console can also run attacks that have not happened. **Simulate an attack** builds a
+scenario and sends it through the same pipeline as the replay (`fallout/simulate.py`):
+
+- **Malicious release.** An attacker publishes a new version of one or more packages (next
+  patch, minor, major, or a version you give) now or at a future time. Fallout adds each version
+  to the package's packument and resolves every requirement as of its publish time, with the
+  same rule as the replay. Templates include a takeover of the maintainer account with the
+  widest reach, and a malicious patch of the package with the highest PageRank.
+- **Compromised versions.** Releases that already existed at S, given as a semver range, are
+  declared compromised.
+- **Live advisory.** Real OSV ids, for an attack that is happening now.
+
+A run takes about a second. The console then reveals the blast radius hop by hop and opens a
+**Response plan**: one `overrides` block that covers every repo, plus a fix preview for each
+repo in priority order, from the same planner as `plan_fix`. Response plans work for real
+incidents too.
+
+Each repo in the plan has **Create PR**. One click plans the fix, verifies it in the sandbox and
+opens the pull request with the demo org's token, the same path as Approve. For a simulation this
+blocks the versions before anyone publishes them. **Delete PR** closes the pull request, deletes
+its branch, puts the repo back on its default branch in the graph and removes every record of it
+from Fallout (Action and Plan nodes, log lines). GitHub keeps the closed pull request, because its
+API cannot delete one. These actions need a console session, so the agent still cannot open or
+delete a pull request.
+
+Simulated incidents have ids that start with `sim-`, and each one has its own URL
+(`#/overview?incident=sim-...`). Deleting a scenario also deletes its pull requests. The graph
+is still the snapshot at S, so a scenario answers "what if this happened to the ecosystem as it
+stood at S".
 
 ## How it works
 
@@ -130,12 +167,69 @@ This rule is stricter than "the range admits an affected version". The weaker ru
 every target as exposed to any old vulnerability. For the chalk/debug replay, the two rules give
 the same result: 790 edges.
 
+### Graph data model
+
+One graph, `fallout`. Counts are from the replay snapshot.
+
+```mermaid
+graph LR
+    M[Maintainer] -->|MAINTAINS| P[Package]
+    M -->|PUBLISHED| V[Version]
+    P -->|HAS_VERSION| V
+    P -->|PKG_DEPENDS_ON| P
+    V -->|"DEPENDS_ON {requirement, kind}"| V
+    R[Repo] -->|"DIRECT_DEP {requirement, scope}"| V
+    R -->|"LOCKS {path}"| V
+    R -->|"OVERRIDES {spec, parent, resolved_version}"| P
+    A[Advisory] -->|AFFECTS| V
+    I[Incident] -->|INCLUDES| A
+    V -->|"CAN_RESOLVE_TO {incident, requirement}"| V
+    R -->|"CAN_RESOLVE_TO"| V
+    I -->|"EXPOSES {hop, via}"| V
+    I -->|"EXPOSES {hop, via, status}"| R
+    PL[Plan] -->|FOR| R
+    AC[Action] -->|ON| R
+    AC -->|REMEDIATES| I
+```
+
+| Node | Count | Key properties |
+|---|---|---|
+| `Package` | 21,010 | `name`, `weekly_downloads`, `maintainer_count`, `has_provenance`, `pagerank`, `betweenness` |
+| `Version` | 34,012 | `key` (`name@version`), `name`, `version`, `published_at`, `deprecated`, `is_malicious`, `simulated` |
+| `Maintainer` | 11,865 | `name`, `package_count`, `reach_packages`, `reach_downloads`, `reach_rank_pagerank` |
+| `Repo` | 6 | `key`, `full_name`, `default_branch`, `checked_ref`, `head_sha`, `has_lockfile`, `lockfile_version` |
+| `Advisory` | 40 | `id` (OSV/GHSA), `kind` (MAL or VULN), `severity`, `summary`, `published_at`, `url` |
+| `Incident` | 14 | `id`, `title`, `started_at`, `blast_at`, `exposed_versions`, `status`, `simulated`, `scenario` |
+| `Plan` | 9 | `id`, `incident`, `repo`, `status`, `body` (the fix plan, as JSON) |
+| `Action` | 3 | `id`, `type`, `plan_id`, `approved_by`, `pr_url`, `verification`, `result` |
+
+| Edge | From → to | Count | Meaning |
+|---|---|---|---|
+| `DEPENDS_ON` | Version → Version | 114,810 | The version that npm resolves at S for one declared requirement. `requirement` is the semver range, `kind` is prod, peer or optional. |
+| `PKG_DEPENDS_ON` | Package → Package | 80,465 | Package-level projection of `DEPENDS_ON`, the input to PageRank and betweenness |
+| `HAS_VERSION` | Package → Version | 34,012 | |
+| `MAINTAINS`, `PUBLISHED` | Maintainer → Package / Version | 83,511 / 33,460 | Account ownership and who published each version |
+| `DIRECT_DEP` | Repo → Version | 36 | A dependency in the repo's `package.json`, resolved at S |
+| `LOCKS` | Repo → Version | 828 | A version in the repo's lockfile, with its `node_modules` path |
+| `OVERRIDES` | Repo → Package | 1 | An entry in the repo's `overrides` |
+| `AFFECTS` | Advisory → Version | 583 | Affected versions, from OSV |
+| `INCLUDES` | Incident → Advisory | 63 | The advisories that make up an incident |
+| `CAN_RESOLVE_TO` | Version or Repo → Version | 1,452 | npm would pick this affected version for this requirement (see [Exposure](#exposure)) |
+| `EXPOSES` | Incident → Version or Repo | 10,674 | Blast-radius result: `hop` and parent pointer `via`. On a Repo edge, `status` holds the repo status. |
+| `FOR`, `ON`, `REMEDIATES` | Plan / Action → Repo / Incident | | The audit trail of planned and executed fixes |
+
+Indexes are in `graph/queries/schema_indexes.cypher`.
+
 ### Graph queries in FalkorDB
 
 - `ingest_advisory` finds each edge into an affected package. Where npm would pick a malicious
   version, it writes a `CAN_RESOLVE_TO` edge (790 edges for the replay).
 - `blast_radius` is a reverse BFS over `DEPENDS_ON|DIRECT_DEP`. Python drives it one hop at a
-  time and stores the result as `EXPOSES {hop, via}` parent pointers.
+  time and stores the result as `EXPOSES {hop, via}` parent pointers. Each hop is one indexed
+  Cypher query over the current frontier (`bfs_hop1.cypher`, `bfs_hopn.cypher`). A single
+  variable-length match (`*1..10`) would enumerate every path, which grows combinatorially on this
+  graph, and it would not record the hop and the parent of each node. The parent pointers let
+  `exposure_path` and the console replay rebuild any path without a second traversal.
 - `exposure_path` follows these pointers and cross-checks them with `shortestPath`.
 - `repo_status` combines `LOCKS`, `OVERRIDES` and the resolved dependency tree of the repo.
 - `critical_packages` finds the critical packages (high PageRank / betweenness centrality). It
@@ -180,7 +274,15 @@ You need Docker and a `.env` file with these values:
 - `FALLOUT_CONSOLE_KEY`
 - `FALLOUT_APPROVAL_SECRET`
 
+The graph snapshot and the data archive are attached to the
+[`snapshot-v1` release](https://github.com/kanishka-sahoo/fallout/releases/tag/snapshot-v1)
+(about 13 MB), because they are not in git.
+
 ```bash
+REL=https://github.com/kanishka-sahoo/fallout/releases/download/snapshot-v1
+mkdir -p data/snapshots
+curl -L -o data/snapshots/dump.rdb "$REL/dump.rdb"                     # the FalkorDB graph
+curl -L -o data/snapshots/fallout-data.tar.gz "$REL/fallout-data.tar.gz"
 tar -xzf data/snapshots/fallout-data.tar.gz   # crawl resolutions + demo repo checkouts
 docker compose build sandbox                  # the lockfile sandbox image
 docker compose up -d                          # seed -> falkordb -> api
@@ -244,6 +346,8 @@ uv run python -m eval.dataset && uv run python -m eval.sample && uv run python -
 - Overrides change the status, not the resolution. `DEPENDS_ON` is the dependency tree without
   overrides. Fallout applies overrides when it calculates the status.
 - The seed set is the 17k packages of `npm-high-impact`, not the full registry.
+- Simulations run against the snapshot at S. Releases published after S that are not part of
+  the scenario are not in the graph.
 
 ## Ethics
 
@@ -255,6 +359,17 @@ or issues to third-party repos.
 
 Maintainer reach measures how much risk is concentrated in a small number of accounts. It does
 not measure the people who own the accounts. The maintainer data has usernames only.
+
+## Use of AI coding assistants
+
+As the rules require, we disclose that AI coding assistants were used to build Fallout. Most of
+the code, tests and docs were written with Claude Code (Anthropic), run through T3 Code; commits
+by `t3code@users.noreply.github.com` come from that tool. The builder wrote the spec
+([docs/BUILD.md](docs/BUILD.md)), chose the architecture, made the design decisions recorded in
+[docs/DECISIONS.md](docs/DECISIONS.md) (for example, the exposure rule and the approval gate),
+reviewed the changes, and ran and checked the eval and the demo.
+
+Separately, the product itself uses an LLM (`gpt-6-luna`) for the agent, as described above.
 
 ## Prior work
 

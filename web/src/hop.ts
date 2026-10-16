@@ -19,5 +19,9 @@ export function hopColor(hop: number, maxHop: number): string {
   return 'rgb(157, 179, 193)'
 }
 
-export const INK = '#17222d'
-export const SAFE = '#2f7d6b'
+// Canvas colours for the graph. WebGL cannot read CSS variables, so each theme is spelled out.
+export type Palette = { ink: string; safe: string; edge: string; label: string; muted: string; tip: string }
+export const PALETTE: Record<'light' | 'dark', Palette> = {
+  light: { ink: '#171717', safe: '#1f7a62', edge: '#dcdcdc', label: '#171717', muted: '#666666', tip: '#ffffff' },
+  dark: { ink: '#ededed', safe: '#3fc29d', edge: '#262626', label: '#d4d4d4', muted: '#a1a1a1', tip: '#0f0f0f' },
+}

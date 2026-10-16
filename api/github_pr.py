@@ -88,3 +88,54 @@ def open_pr(
             .json()
         )
     return PullRequest(pr["html_url"], pr["number"], branch, commit)
+
+
+def parse_pr_url(url: str) -> tuple[str, int]:
+    """Returns (owner/repo, number) for https://github.com/owner/repo/pull/N."""
+    parts = url.removeprefix("https://github.com/").split("/")
+    if len(parts) != 4 or parts[2] != "pull" or not parts[3].isdigit():
+        raise ValueError(f"not a pull request URL: {url}")
+    return f"{parts[0]}/{parts[1]}", int(parts[3])
+
+
+def close_pr(url: str) -> dict[str, str]:
+    """Closes a Fallout PR and deletes its branch. Only repos on the allowlist, only fallout/ branches."""
+    full, number = parse_pr_url(url)
+    if full not in SETTINGS["allowed_repos"]:
+        raise RepoNotAllowed(f"{full} is not in config.allowed_repos")
+    with client() as gh:
+        pr = gh.get(f"/repos/{full}/pulls/{number}").raise_for_status().json()
+        branch = pr["head"]["ref"]
+        if not branch.startswith("fallout/"):
+            raise RepoNotAllowed(f"{url} is not a Fallout branch ({branch})")
+        if pr["state"] == "open":
+            gh.patch(f"/repos/{full}/pulls/{number}", json={"state": "closed"}).raise_for_status()
+        gone = gh.delete(f"/repos/{full}/git/refs/heads/{branch}")
+        if gone.status_code not in (204, 404, 422):  # 404/422: the branch is already gone
+            gone.raise_for_status()
+    _states.pop(url, None)
+    return {"repo": full, "number": str(number), "branch": branch}
+
+
+_states: dict[str, tuple[float, str]] = {}  # url -> (fetched at, state)
+
+
+def pr_states(urls: list[str], ttl: float = 30.0) -> dict[str, str]:
+    """Returns open, closed or merged for each PR URL. Results are cached for `ttl` seconds."""
+    import time
+
+    now = time.monotonic()
+    out = {u: s for u, (t, s) in _states.items() if u in urls and now - t < ttl}
+    todo = [u for u in urls if u not in out]
+    if todo:
+        with client() as gh:
+            for u in todo:
+                try:
+                    full, number = parse_pr_url(u)
+                    pr = gh.get(f"/repos/{full}/pulls/{number}").raise_for_status().json()
+                    state = "merged" if pr.get("merged_at") else pr["state"]
+                except (ValueError, httpx.HTTPError):
+                    state = "unknown"
+                _states[u] = (now, state)
+                out[u] = state
+    return out

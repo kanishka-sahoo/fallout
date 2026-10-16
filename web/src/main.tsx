@@ -1,10 +1,9 @@
-import '@fontsource-variable/archivo/wdth.css'
-import '@fontsource/ibm-plex-mono/400.css'
-import '@fontsource/ibm-plex-mono/500.css'
+import '@fontsource-variable/geist'
+import '@fontsource-variable/geist-mono'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'
-import './styles.css'
+import './index.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

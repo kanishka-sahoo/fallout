@@ -27,6 +27,7 @@ from fallout import fixplan, sandbox
 from fallout.blast import Affected
 from fallout.db import graph, query, rows
 from fallout.settings import SETTINGS, load_anchor
+from fallout.simulate import is_simulated
 from fallout.tools import checkout_dir, recheck_repo
 
 Emit = Callable[..., Any]
@@ -48,18 +49,32 @@ def render_path(p: dict[str, Any]) -> str:
     return "<br>\n".join(lines)
 
 
+def advisory_link(a: dict[str, Any]) -> str:
+    return f"[{a['id']}]({a['url']})" if a.get("url") else str(a["id"])
+
+
 def pr_body(plan: dict[str, Any], advisories: list[dict[str, Any]], verification: dict[str, Any]) -> str:
     body = plan["body"]
     out = [
         f"## Fallout: remediation for `{body['incident']}`",
         "",
+        *(
+            [
+                "> **Simulated scenario.** This change blocks versions from a what-if attack that "
+                "was modelled in the Fallout console. The overrides apply only if those versions "
+                "are ever published.",
+                "",
+            ]
+            if is_simulated(body["incident"])
+            else []
+        ),
         f"Status before this change: **{body['status_before']}**.",
         "",
         f"Snapshot time S: `{body['anchor_S']}`. The dependency graph and version resolution use the "
         "npm registry as it was at S, one second before the first malicious version was published.",
         "",
         "### Advisories",
-        *[f"- [{a['id']}]({a['url']}): `{a['package']}@{a['version']}`" for a in advisories],
+        *[f"- {advisory_link(a)}: `{a['package']}@{a['version']}`" for a in advisories],
         "",
         "### Why this repo is exposed",
         "",
@@ -160,7 +175,11 @@ def apply_fix(plan_id: str, repo: str, token: str, approved_by: str, emit: Emit 
                 full,
                 branch,
                 files,
-                title=f"fix(deps): remove malicious versions of {', '.join(pkgs)} ({incident})",
+                title=(
+                    f"fix(deps): block simulated malicious versions of {', '.join(pkgs)} ({incident})"
+                    if is_simulated(incident)
+                    else f"fix(deps): remove malicious versions of {', '.join(pkgs)} ({incident})"
+                ),
                 body=pr_body(plan, advisories, v),
                 message=f"fix(deps): remediate {incident}\n\nFallout plan {plan_id}, verified in a sandbox.",
             )
@@ -197,6 +216,7 @@ def apply_fix(plan_id: str, repo: str, token: str, approved_by: str, emit: Emit 
         fixplan.transition(g, plan_id, [fixplan.APPLYING], fixplan.APPLIED)
         recheck = recheck_repo(full, incident, branch=pr.branch)
         out["recheck"] = recheck
+        recheck_everywhere(full, pr.branch, skip=incident)
         emit(
             "recheck",
             source="fallout-api",
@@ -206,3 +226,18 @@ def apply_fix(plan_id: str, repo: str, token: str, approved_by: str, emit: Emit 
             after=recheck["result"].get("after", {}).get("status"),
         )
     return out
+
+
+def recheck_everywhere(full: str, branch: str | None, skip: str | None = None) -> list[str]:
+    """Every incident reads the same LOCKS and OVERRIDES edges of a repo. After the repo is loaded
+    from another branch, this rechecks it for each incident that holds a status for it.
+    `branch=None` loads the default branch from the local checkout."""
+    g = graph()
+    done = []
+    for r in rows(g, "repo_incidents", {"repo": f"repo:{full}"}):
+        if r["incident"] != skip:
+            recheck_repo(full, r["incident"], branch=branch)
+            done.append(r["incident"])
+    if branch is None and not done:
+        recheck_repo(full, SETTINGS["replay_incident"])  # still reload the checkout
+    return done
