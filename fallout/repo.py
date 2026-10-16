@@ -1,6 +1,6 @@
-"""Parse a repo checkout: manifests, lockfile and overrides (BUILD.md §4.2, §5.5 step 6).
+"""Parses a repo checkout: manifests, lockfile and overrides.
 
-Pure functions over files on disk, so load_repos.py, recheck_repo and the tests share them.
+These are pure functions over files on disk. load_repos.py, recheck_repo and the tests all use them.
 """
 
 from __future__ import annotations
@@ -16,7 +16,7 @@ NPM_ALIAS = re.compile(r"^npm:((?:@[^/@]+/)?[^@]+)(?:@(.*))?$")
 
 @dataclass(frozen=True)
 class Dep:
-    name: str  # the registry package actually installed (alias target for `npm:` specs)
+    name: str  # the registry package that npm installs (the alias target for `npm:` specs)
     range: str
     scope: str  # prod | dev
 
@@ -32,23 +32,23 @@ class Locked:
 class Override:
     name: str
     spec: str
-    parent: str | None  # None = global; otherwise the package the override is scoped under
+    parent: str | None  # None for a global override; otherwise the parent package of a nested override
 
 
 def split_alias(name: str, spec: str) -> tuple[str, str]:
-    """`"wrap-ansi-cjs": "npm:wrap-ansi@^7"` installs wrap-ansi at ^7."""
+    """Resolves an npm alias. For example, `"wrap-ansi-cjs": "npm:wrap-ansi@^7"` installs wrap-ansi at ^7."""
     m = NPM_ALIAS.match(spec.strip())
     return (m[1], m[2] or "*") if m else (name, spec)
 
 
 def strip_selector(key: str) -> str:
-    """Override keys may carry a version selector: `debug@4` -> `debug`, `@a/b@1` -> `@a/b`."""
+    """Removes the version from an override key: `debug@4` -> `debug`, `@a/b@1` -> `@a/b`."""
     at = key.rfind("@")
     return key[:at] if at > 0 else key
 
 
 def manifests(repo_dir: Path) -> list[Path]:
-    """Root package.json plus each workspace package.json (glob patterns only)."""
+    """Returns the root package.json and each workspace package.json. Only glob patterns are supported."""
     root = repo_dir / "package.json"
     if not root.exists():
         return []
@@ -62,9 +62,10 @@ def manifests(repo_dir: Path) -> list[Path]:
 
 
 def direct_deps(repo_dir: Path) -> list[Dep]:
-    """dependencies + devDependencies of the root and every workspace, minus workspace packages.
+    """Returns the dependencies and devDependencies of the root and every workspace. Workspace
+    packages are not included.
 
-    One entry per (name, range); `prod` wins when the same pair is both prod and dev.
+    There is one entry per (name, range). If a pair is both prod and dev, it is prod.
     """
     docs = [json.loads(p.read_text()) for p in manifests(repo_dir)]
     internal = {d.get("name") for d in docs}
@@ -81,9 +82,9 @@ def direct_deps(repo_dir: Path) -> list[Dep]:
 
 
 def parse_overrides(pkg: dict[str, Any]) -> list[Override]:
-    """npm `overrides` -> flat entries. Nested objects scope an override under their key; the
-    nearest enclosing key is recorded as `parent`. `"."` overrides the scoping package itself,
-    and `$name` references the root dependency's spec."""
+    """Converts npm `overrides` to a flat list. A nested object makes a nested override under its
+    key, and the nearest enclosing key becomes `parent`. `"."` overrides the parent package
+    itself. `$name` refers to the spec of the root dependency with that name."""
     root_specs = {**pkg.get("devDependencies", {}), **pkg.get("dependencies", {})}
 
     def spec_of(s: str) -> str:
@@ -107,7 +108,7 @@ def parse_overrides(pkg: dict[str, Any]) -> list[Override]:
 
 
 def locked_packages(lock: dict[str, Any]) -> list[Locked]:
-    """Every installed registry package in a v1, v2 or v3 package-lock.json."""
+    """Returns every installed registry package in a v1, v2 or v3 package-lock.json."""
     if "packages" in lock:  # v2 / v3
         out = []
         for path, entry in lock["packages"].items():

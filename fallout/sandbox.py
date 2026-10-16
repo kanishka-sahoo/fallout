@@ -1,16 +1,17 @@
-"""Lockfile sandbox and verification (BUILD.md §6.3 steps 2–3).
+"""Lockfile sandbox and verification.
 
-The checkout is copied without `.git` into a temp dir, the plan's manifest is written over
-it, and a throwaway `fallout-sandbox` container (workers/sandbox/Dockerfile) runs
-`npm install --package-lock-only --ignore-scripts --before=<S>` on it as the unprivileged
-`node` user. Nothing else is mounted and no environment is passed, so no token can leak into
-the install. The regenerated lockfile is then parsed with the same code as load_repos and
-checked against the incident's affected set.
+The checkout is copied into a temporary directory without `.git`, and the plan's manifest
+replaces package.json. An ephemeral `fallout-sandbox` container (workers/sandbox/Dockerfile)
+then runs `npm install --package-lock-only --ignore-scripts --before=<S>` in it as the
+unprivileged `node` user. The container gets no other mounts and no environment variables, so
+no token can get into the install. The new lockfile is parsed with the same code as
+load_repos and checked against the incident's affected set.
 
-An existing lockfile entry at an affected version is removed before the install. npm keeps a
-locked node that still satisfies some edge rather than re-applying overrides to it (seen on
-the LOCKED_MALICIOUS fixture: the hoisted `debug@4.4.2` survived `"debug@4.4.2": "4.4.1"`), so
-it has to be made to resolve those nodes again. Only v2/v3 lockfiles are pruned.
+Lockfile entries at an affected version are removed before the install. If a locked node
+still satisfies an edge, npm keeps it and does not apply the overrides to it. The
+LOCKED_MALICIOUS fixture showed this: the hoisted `debug@4.4.2` stayed after
+`"debug@4.4.2": "4.4.1"` was added. Removing the entries makes npm resolve those nodes again.
+Only v2 and v3 lockfiles are pruned.
 """
 
 from __future__ import annotations
@@ -76,16 +77,16 @@ def prune_lock(work: Path, affected: set[tuple[str, str]]) -> list[str]:
 def regenerate(
     checkout: Path, manifest: dict[str, Any], before: str, affected: set[tuple[str, str]]
 ) -> tuple[Path, Verification | None, str, list[str]]:
-    """Copy `checkout`, write `manifest`, prune affected lock entries, run the sandboxed
-    install. The Verification is set only when npm itself failed."""
+    """Copies `checkout`, writes `manifest`, removes affected lock entries and runs the install
+    in the sandbox. The returned Verification is set only if npm failed."""
     ensure_image()
-    # Under compose the API talks to the host's Docker daemon, so the bind-mounted dir must be
-    # a path the host sees too: FALLOUT_SANDBOX_TMP is mounted at the same path on both sides.
+    # With compose, the API uses the host's Docker daemon. The bind-mounted directory must be
+    # a path that the host can also see, so FALLOUT_SANDBOX_TMP is mounted at the same path in both.
     work = Path(tempfile.mkdtemp(prefix="fallout-sandbox-", dir=os.environ.get("FALLOUT_SANDBOX_TMP")))
     shutil.copytree(checkout, work, ignore=shutil.ignore_patterns(".git", "node_modules"), dirs_exist_ok=True)
     (work / "package.json").write_text(json.dumps(manifest, indent=2) + "\n")
     pruned = prune_lock(work, affected)
-    os.chmod(work, 0o777)  # the container's `node` user writes the lockfile
+    os.chmod(work, 0o777)  # the `node` user in the container writes the lockfile
     for p in work.rglob("*"):
         os.chmod(p, 0o777 if p.is_dir() else 0o666)
     cmd = [
@@ -110,7 +111,7 @@ def verify(
     took_ms: int = 0,
     pruned: list[str] | None = None,
 ) -> Verification:
-    """Assert no locked (name, version) is in the advisory's affected set."""
+    """Checks that no locked (name, version) is in the incident's affected set."""
     lock = json.loads((work / "package-lock.json").read_text())
     locked = locked_packages(lock)
     found = sorted({f"{lk.name}@{lk.version}" for lk in locked if (lk.name, lk.version) in affected})

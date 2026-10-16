@@ -16,8 +16,9 @@ QUERIES_DIR = ROOT / "graph" / "queries"
 GRAPH_NAME = os.environ.get("FALLOUT_GRAPH", "fallout")
 
 
-# The image defaults cap result sets at 10k rows and kill queries after 1 s. Both truncate a
-# blast radius silently, so lift them on every connect instead of trusting the container args.
+# The image defaults limit result sets to 10k rows and stop queries after 1 s. Both limits cut a
+# blast radius short without an error. So every connection removes the limits, and the code
+# does not rely on the container arguments.
 SERVER_CONFIG = {"RESULTSET_SIZE": -1, "TIMEOUT": 0, "TIMEOUT_DEFAULT": 0, "TIMEOUT_MAX": 0}
 
 
@@ -35,13 +36,13 @@ def graph(name: str = GRAPH_NAME) -> Graph:
     return _db(host, port).select_graph(name)
 
 
-# Names of the catalogue queries run in the current context, so every tool can report the
-# Cypher behind its answer (BUILD.md §6.1 envelope).
+# Names of the catalogue queries that ran in the current context. Every tool reports them in
+# the `cypher` field of its envelope.
 _used: ContextVar[list[str] | None] = ContextVar("fallout_queries_used", default=None)
 
 
 def track_queries() -> list[str]:
-    """Start recording query names in this context; returns the (live) list."""
+    """Starts to record query names in this context. Returns the list, which continues to update."""
     used: list[str] = []
     _used.set(used)
     return used
@@ -53,7 +54,7 @@ def _text(name: str) -> str:
 
 
 def query(name: str) -> str:
-    """Text of graph/queries/<name>.cypher, the single source of truth for every query."""
+    """Returns the text of graph/queries/<name>.cypher. All queries come from these files."""
     used = _used.get()
     if used is not None and name not in used:
         used.append(name)
@@ -61,13 +62,13 @@ def query(name: str) -> str:
 
 
 def statements(name: str) -> list[str]:
-    """A .cypher file holding one statement per line (comments and blanks skipped)."""
+    """Returns the statements of a one-statement-per-line .cypher file, without comments and blank lines."""
     lines = (ln.strip() for ln in query(name).splitlines())
     return [ln for ln in lines if ln and not ln.startswith("//")]
 
 
 def rows(g: Graph, name: str, params: dict[str, Any] | None = None) -> list[dict[str, Any]]:
-    """Run a catalogue query and return its rows as dicts keyed by column name."""
+    """Runs a catalogue query and returns its rows as dicts keyed by column name."""
     res = g.query(query(name), params or {})
     cols = [h[1] if isinstance(h, list | tuple) else h for h in res.header]
     return [dict(zip(cols, r, strict=True)) for r in res.result_set]

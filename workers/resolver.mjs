@@ -1,23 +1,23 @@
 #!/usr/bin/env node
-// Time-anchored version resolution with npm's own picker (BUILD.md §5.2).
+// Resolves versions as of snapshot time S with npm's own version picker.
 //
 // Usage: node resolver.mjs --before <ISO 8601>  < requests.jsonl  > results.jsonl
 //
-// Input, one JSON object per line, grouped by package so a packument is sent once:
+// Input is one JSON object per line. Requests are grouped by package, so each packument is sent once:
 //   {"packument": {name, versions: {v: {deprecated?}}, time: {v: iso}, "dist-tags": {...}},
 //    "requests": [{"id": "...", "range": "^4.3.4"}, ...]}
-// Output, one line per request:
+// Output is one line per request:
 //   {"id": "...", "version": "4.4.1"}            resolved
-//   {"id": "...", "error": "ETARGET", "message"}  no version satisfies at S; never invented
+//   {"id": "...", "error": "ETARGET", "message"}  no version satisfies the range at S
 
 import { createInterface } from 'node:readline'
 import pickManifest from 'npm-pick-manifest'
 import semver from 'semver'
 
-// The historical dist-tag is not available, so when the packument has none, `latest` is
-// approximated as the highest stable, non-deprecated version published at or before S,
-// falling back to deprecated ones, then to prereleases for packages that had no stable
-// release yet. Recorded under Limitations in the README.
+// The historical dist-tag is not available. If the packument has no `latest` tag, `latest` is
+// set to the highest stable, non-deprecated version published at or before S. If there is no
+// such version, deprecated versions are used, and then prereleases (for packages that had no
+// stable release yet). The README lists this under Limitations.
 export function synthesizeLatest (packument, before) {
   const cutoff = Date.parse(before)
   const atS = Object.keys(packument.versions).filter((v) => {
@@ -31,9 +31,10 @@ export function synthesizeLatest (packument, before) {
 }
 
 export function resolve (packument, range, before) {
-  // deps.dev reports today's deprecation status, not the status at S. A package deprecated in
-  // full was almost always deprecated after its active life, and the flag cannot change the
-  // relative ranking, so drop it rather than let it block the default version.
+  // deps.dev reports the current deprecation status, not the status at S. If all versions of a
+  // package are deprecated, the package was almost always deprecated after its active life.
+  // The flag cannot change the relative order of the versions, so remove it. Otherwise it
+  // would stop npm from picking the default version.
   const manifests = Object.values(packument.versions)
   if (manifests.length && manifests.every((m) => m.deprecated)) {
     for (const m of manifests) delete m.deprecated

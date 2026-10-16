@@ -1,22 +1,23 @@
-"""Minimal remediation plans (BUILD.md §6.3 step 1).
+"""Minimal remediation plans.
 
-For each affected package P a repo still reaches (unmitigated, or locked at an affected
-version), find the requirements on P in the repo's resolved tree that admit an affected
-version, and pick the highest version of P published at or before S that is not affected and
-satisfies all of them.
+The planner looks at each affected package P that a repo still reaches (not mitigated, or
+locked at an affected version). It finds the requirements on P in the repo's transitive
+dependency tree that admit an affected version. Then it picks the highest version of P that
+was published at or before S, is not affected, and satisfies all of those requirements.
 
-- A **selector override** `{"P@<affected>": v}`. Arborist applies a keyed rule only to edges
-  whose spec intersects the key (override-set.js `getEdgeRule`), so it rewrites exactly the
-  edges that admit the malicious version and leaves e.g. `debug@^3.2.7` alone. One version
-  then has to satisfy only the admitting ranges, which avoids most scoped overrides.
-- A **direct dependency** on P is pinned to the highest safe version its own range admits.
-  The pin does not intersect the selector, so npm's root-override check (EOVERRIDE) never fires.
-- When no single version fits the admitting ranges: **scoped overrides** `{parent: {P: v}}`,
-  one per parent package, each with the highest safe version its own ranges admit.
+- **Version-specific override** `{"P@<affected>": v}`. Arborist applies a keyed rule only to
+  edges whose spec intersects the key (override-set.js `getEdgeRule`). The rule changes only
+  the edges that admit the malicious version, and does not change, for example, `debug@^3.2.7`.
+  The new version must satisfy only the admitting ranges, so most repos need no nested overrides.
+- **Pin.** A direct dependency on P is pinned to the highest safe version that its own range
+  admits. The pin does not intersect the override key, so npm's root-override check
+  (EOVERRIDE) does not fail.
+- **Nested overrides** `{parent: {P: v}}`, if no single version satisfies the admitting ranges.
+  There is one per parent package, each with the highest safe version that its ranges admit.
 
-Override rules match on the edge *name*, so an aliased edge (`"strip-ansi-cjs":
-"npm:strip-ansi@^6"`) is never rewritten; the sandbox verification catches any such miss
-before a PR exists.
+Override rules match on the edge *name*. An aliased edge (`"strip-ansi-cjs":
+"npm:strip-ansi@^6"`) does not change. The sandbox verification finds such a miss before
+a PR is opened.
 """
 
 from __future__ import annotations
@@ -48,16 +49,16 @@ NOTHING_TO_FIX = "NOTHING_TO_FIX"
 @dataclass
 class PackageFix:
     package: str
-    strategy: str  # selector | pin | scoped | unresolved
+    strategy: str  # selector (version-specific override) | pin | scoped (nested overrides) | unresolved
     version: str | None
     requirements: list[dict[str, str]]
-    scoped: dict[str, str] = field(default_factory=dict)  # parent package ("(root)" = pin) -> version
+    scoped: dict[str, str] = field(default_factory=dict)  # parent package -> version; "(root)" is the pin
     reason: str = ""
 
 
 def safe_versions(pkg: str, bad: set[str], S: str) -> list[str]:
-    """Stable versions of `pkg` published at or before S that are not affected, non-deprecated
-    first (deprecated ones only when nothing else exists), highest last."""
+    """Returns the stable versions of `pkg` published at or before S that are not affected.
+    Deprecated versions are returned only if no other versions exist."""
     from ingest.anchor import parse_ts
 
     doc = asyncio.run(packuments({pkg}, S)).get(pkg) or {"versions": {}, "time": {}}
@@ -72,7 +73,7 @@ def safe_versions(pkg: str, bad: set[str], S: str) -> list[str]:
 
 
 def best_version(candidates: list[str], ranges: list[str]) -> str | None:
-    """Highest candidate satisfying every range (npm semver), or None."""
+    """Returns the highest candidate that satisfies every range (npm semver), or None."""
     if not candidates:
         return None
     reqs = [
@@ -111,11 +112,12 @@ def plan_package(
     bad_versions: list[str],
     direct: tuple[str, str] | None,
 ) -> tuple[PackageFix, dict[str, str] | None, dict[str, Any]]:
-    """Decide the fix for one affected package.
+    """Decides the fix for one affected package.
 
-    reqs: every requirement on `pkg` in the resolved tree, as {parent, parent_name, requirement};
-    the root's own requirement has parent_name "(root)". candidates: safe versions at S.
-    direct: (manifest field, spec) when the root manifest depends on `pkg` directly.
+    reqs: every requirement on `pkg` in the dependency tree, as {parent, parent_name, requirement}.
+    The root's own requirement has parent_name "(root)".
+    candidates: the safe versions at S.
+    direct: (manifest field, spec) if the root manifest depends on `pkg` directly.
     Returns (fix, pin or None, overrides to merge).
     """
     admitting = [r for r in reqs if admits(r["requirement"], bad_versions)]
@@ -155,7 +157,7 @@ def plan_package(
 
 
 def plan_repo(g: Graph, incident: str, repo_key: str, manifest: dict[str, Any]) -> dict[str, Any]:
-    """Build (but do not store) a plan body for one repo."""
+    """Builds a plan body for one repo. It does not store the plan."""
     S = load_anchor()["S"]
     affected = Affected.load(g, incident)
     hit = rows(g, "repo_exposed", {"repo": repo_key, "incident": incident})
@@ -209,8 +211,8 @@ def plan_repo(g: Graph, incident: str, repo_key: str, manifest: dict[str, Any]) 
 
 
 def apply_changes(manifest: dict[str, Any], changes: dict[str, Any]) -> dict[str, Any]:
-    """The manifest with the plan's pins and overrides merged in (existing overrides kept
-    unless the plan replaces the same key)."""
+    """Returns a copy of the manifest with the plan's pins and overrides added. Existing
+    overrides stay, unless the plan replaces the same key."""
     out = json.loads(json.dumps(manifest))
     for pkg, pin in changes["pin"].items():
         out[pin["field"]][pkg] = pin["to"]
@@ -252,6 +254,6 @@ def load(g: Graph, plan_id: str) -> dict[str, Any] | None:
 
 
 def transition(g: Graph, plan_id: str, frm: list[str], to: str) -> bool:
-    """Compare-and-set on the plan status; False when the plan was not in `frm`."""
+    """Compare-and-set on the plan status. Returns False if the plan status was not in `frm`."""
     hit = rows(g, "plan_set_status", {"id": plan_id, "from": frm, "to": to, "now": int(time.time() * 1000)})
     return bool(hit)

@@ -1,4 +1,4 @@
-// BUILD.md §7.3, hop 1: dependents that would resolve to an affected version.
+// Blast radius, hop 1. Finds dependents that would resolve to an affected version.
 UNWIND $frontier AS k
 MATCH (m:Version {key: k})<-[c:CAN_RESOLVE_TO]-(u)
 WHERE c.incident = $incident

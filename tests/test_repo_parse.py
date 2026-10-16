@@ -1,4 +1,4 @@
-"""BUILD.md §14: lockfile (v1/v2/v3, nested paths, aliases) and overrides (global, scoped) parsing."""
+"""Tests lockfile parsing (v1, v2, v3, nested paths, aliases) and overrides parsing (global, nested)."""
 
 import json
 from pathlib import Path
@@ -37,7 +37,7 @@ def test_lockfile_v2_v3_packages_map() -> None:
         Locked("@scope/pkg", "1.0.0", "node_modules/@scope/pkg"),
         Locked("strip-ansi", "6.0.1", "node_modules/strip-ansi-cjs"),
     }
-    # v2 carries the same `packages` map (plus a v1 `dependencies` section that is ignored)
+    # v2 has the same `packages` map, and also a v1 `dependencies` section that the parser ignores
     assert set(locked_packages({**V3, "lockfileVersion": 2, "dependencies": V1["dependencies"]})) == got
 
 

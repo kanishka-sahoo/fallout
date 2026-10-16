@@ -1,11 +1,11 @@
-"""fallout-tools: the BUILD.md §6.2 tools over MCP (stdio).
+"""fallout-tools: the Fallout tools over MCP (stdio).
 
-Thin wrappers over fallout/tools.py. Every tool returns the §6.1 envelope
-`{result, paths, cypher, timing_ms, summary}`. There is deliberately no `apply_fix` here: a
-fix reaches GitHub only through the console's Approve button (api/approval.py), and
-tests/test_approval.py asserts this list never grows a GitHub-writing tool.
+Each tool is a small wrapper over fallout/tools.py. Every tool returns the standard envelope
+`{result, paths, cypher, timing_ms, summary}`. This server has no `apply_fix` tool. A fix can
+get to GitHub only through the Approve button in the console (api/approval.py).
+tests/test_approval.py checks that this server has no tool that writes to GitHub.
 
-    uv run python -m mcp_server.server          # stdio; also works from Claude Desktop / Code
+    uv run python -m mcp_server.server          # stdio; Claude Desktop and Claude Code can also use it
 """
 
 from __future__ import annotations
@@ -27,7 +27,7 @@ server = MCPServer(
 
 
 async def _run(name: str, **kwargs: Any) -> dict[str, Any]:
-    # The tools block on FalkorDB and spawn Node workers; keep them off the event loop.
+    # The tools block on FalkorDB and start Node workers, so they run in a worker thread.
     return await anyio.to_thread.run_sync(lambda: tools.TOOLS[name](**kwargs))
 
 

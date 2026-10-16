@@ -1,3 +1,3 @@
-// A re-parse replaces DIRECT_DEP, LOCKS and OVERRIDES (BUILD.md §4.2).
+// Deletes DIRECT_DEP, LOCKS and OVERRIDES edges before a re-parse writes new ones.
 MATCH (r:Repo {key: $key})-[e:DIRECT_DEP|LOCKS|OVERRIDES]->()
 DELETE e

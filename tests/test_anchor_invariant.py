@@ -1,4 +1,4 @@
-"""BUILD.md §14: no non-malicious Version in the loaded graph is newer than S."""
+"""Tests that no non-malicious Version in the loaded graph was published after S."""
 
 import pytest
 

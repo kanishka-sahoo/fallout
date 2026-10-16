@@ -24,13 +24,13 @@ export function Ecosystem() {
   const topReach = Math.max(...maint.map((m) => m.reach_packages), 1)
   return (
     <>
-      <h3>Chokepoint packages</h3>
+      <h3>Critical packages</h3>
       <p className="note">
-        Centrality over the package dependency graph as it stood at S, computed in FalkorDB with <code>algo.pageRank</code> and <code>algo.betweenness</code>.
+        Centrality scores for the package dependency graph at snapshot time (S). FalkorDB computes them with <code>algo.pageRank</code> and <code>algo.betweenness</code>.
       </p>
       <div className="seg" role="group" aria-label="Algorithm">
         <button aria-pressed={algo === 'pagerank'} onClick={() => setAlgo('pagerank')}>PageRank</button>
-        <button aria-pressed={algo === 'betweenness'} onClick={() => setAlgo('betweenness')}>Betweenness</button>
+        <button aria-pressed={algo === 'betweenness'} onClick={() => setAlgo('betweenness')}>Betweenness centrality</button>
       </div>
       {err ? <p className="note">{err}</p> : null}
       <table className="data">
@@ -46,11 +46,11 @@ export function Ecosystem() {
           ))}
         </tbody>
       </table>
-      {algo === 'pagerank' ? <p className="note">PageRank shown ×1000.</p> : null}
+      {algo === 'pagerank' ? <p className="note">PageRank values are multiplied by 1000.</p> : null}
 
       <h3>Maintainer reach</h3>
       <p className="note">
-        How many packages a single account takeover would reach through dependencies, and their weekly downloads. A measure of concentration risk in the ecosystem, not of any person.
+        The number of packages that one compromised maintainer account can reach through dependencies, with their weekly downloads. This shows concentration risk in the ecosystem. It does not rate any person.
       </p>
       <table className="data">
         <thead><tr><th>Account</th><th className="num">Reach</th><th className="num">Weekly</th><th className="num">Sole maint.</th></tr></thead>
@@ -78,17 +78,17 @@ export function Metrics() {
   const [err, setErr] = useState<string | null>(null)
   useEffect(() => { api.results().then(setRes).catch((e) => setErr(String(e))) }, [])
   if (err) return <p className="note">{err}</p>
-  if (!res) return <p className="note">Loading eval results…</p>
+  if (!res) return <p className="note">Loading evaluation results…</p>
   const s = res.summary as Record<string, any>
   return (
     <>
-      <h3>Measured against npm itself</h3>
+      <h3>Accuracy against the npm resolver</h3>
       <p className="note">
-        {res.config.n_pairs} sampled questions of the form “as of S, is this target exposed, and through which path?”, over {res.config.n_units} advisory sets.
-        Ground truth is npm's own resolver (arborist) at S, which never reads FalkorDB. Model <code>{res.config.model}</code>.
+        {res.config.n_pairs} sampled questions across {res.config.n_units} advisory groups. Each question asks if a target is exposed at snapshot time (S), and through which path.
+        Ground truth is the npm resolver (Arborist) at S. Arborist does not read FalkorDB. Model: <code>{res.config.model}</code>.
       </p>
       <table className="data">
-        <thead><tr><th>System</th><th className="num">Recall</th><th className="num">F1</th><th className="num">Made-up nodes</th><th className="num">Valid paths</th></tr></thead>
+        <thead><tr><th>System</th><th className="num">Recall</th><th className="num">F1</th><th className="num">Hallucinated packages</th><th className="num">Path validity</th></tr></thead>
         <tbody>
           {Object.keys(SYS).filter((k) => s[k]).map((k) => (
             <tr key={k} className={k === 'C' ? 'ours' : ''}>
@@ -116,7 +116,7 @@ export function Metrics() {
           ))}
         </tbody>
       </table>
-      <p className="note">Run <code>{res.run_id}</code>. Full table, disagreements and every prompt: <code>eval/results.md</code>.</p>
+      <p className="note">Run ID <code>{res.run_id}</code>. The full table, disagreements and all prompts are in <code>eval/results.md</code>.</p>
     </>
   )
 }

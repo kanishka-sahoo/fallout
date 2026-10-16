@@ -1,6 +1,6 @@
-"""Package-level projection for the ecosystem algorithms (BUILD.md §5.5 step 7, §7.6):
-(Package)-[:PKG_DEPENDS_ON]->(Package) wherever any version of one depends on any version of
-the other. Batched by chunks of package names; MERGE keeps re-runs idempotent.
+"""Builds the package-level projection for the ecosystem algorithms. It creates
+(Package)-[:PKG_DEPENDS_ON]->(Package) where any version of one package depends on any version
+of the other. It runs in batches of package names. MERGE makes a second run idempotent.
 
     uv run python -m ingest.project_packages
 """

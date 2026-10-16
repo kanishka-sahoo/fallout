@@ -4,7 +4,7 @@ jobs:
   python:
     runs-on: ubuntu-latest
     services:
-      falkordb:  # the BFS and anchor tests use a throwaway graph
+      falkordb:  # the BFS and anchor tests use a temporary graph
         image: falkordb/falkordb:latest
         ports: ["6380:6379"]
         options: --health-cmd "redis-cli ping" --health-interval 5s --health-retries 10

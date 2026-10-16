@@ -120,11 +120,11 @@ export function BlastGraph({ data, reveal, path, selected, onSelect }: Props) {
       s.kill()
       sigma.current = null
     }
-    // onSelect is stable for the lifetime of the graph (App passes a useCallback).
+    // onSelect does not change while the graph exists (App passes a useCallback).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [graph])
 
-  // Reveal, path highlight and selection: mutate the reducer state and refresh.
+  // Update the reducer state for reveal, path highlight and selection, then refresh.
   useEffect(() => {
     const g = graph
     for (const e of g.filterEdges((_, attrs) => attrs.path === true)) g.dropEdge(e)
@@ -142,5 +142,5 @@ export function BlastGraph({ data, reveal, path, selected, onSelect }: Props) {
     sigma.current?.refresh()
   }, [graph, reveal, path, selected])
 
-  return <div className="graph" ref={container} aria-label="Blast radius graph: malicious versions at the centre, one ring per hop" />
+  return <div className="graph" ref={container} aria-label="Blast radius graph. Malicious versions are at the centre. Each ring is one hop." />
 }

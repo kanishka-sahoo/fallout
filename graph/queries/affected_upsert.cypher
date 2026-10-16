@@ -1,5 +1,5 @@
-// Malicious versions never existed at S, so they are created here (BUILD.md §5.3). A stub
-// made earlier from a lockfile (LOCKED_MALICIOUS) is the same node and is upgraded in place.
+// Malicious versions did not exist at S, so this query creates them. A lockfile can create a
+// stub node earlier (LOCKED_MALICIOUS). That stub is the same node, and this query updates it.
 UNWIND $rows AS row
 MERGE (p:Package {name: row.name})
 MERGE (v:Version {key: row.key})

@@ -1,13 +1,13 @@
-"""Ingest OSV advisories into an incident and compute CAN_RESOLVE_TO (BUILD.md §5.3, §7.1–7.2).
+"""Ingests OSV advisories into an incident and computes CAN_RESOLVE_TO edges.
 
-Exposure rule (docs/DECISIONS.md D1): a dependent is exposed when the version npm *would pick*
-for its requirement is affected, not merely when the range admits one.
-- MALICIOUS (`MAL-`): the package's packument at S, plus its malicious versions injected with
-  their real publish times, resolved by npm-pick-manifest as of the last malicious publish.
-  Each malicious release was the newest, so for the chalk/debug replay this agrees with
-  "range admits".
-- VULN: the version resolved at S (the DEPENDS_ON / DIRECT_DEP target) is in the affected set.
-One edge per dependent per affected package, pointing at the version npm would pick.
+Exposure rule (docs/DECISIONS.md D1): a dependent is exposed if the version that npm *would
+pick* for its requirement is affected. A range that only admits an affected version is not enough.
+- MALICIOUS (`MAL-`): take the package's packument at S and add its malicious versions with
+  their real publish times. npm-pick-manifest then resolves the requirement as of the last
+  malicious publish. Each malicious release was the newest version, so for the chalk/debug
+  replay this gives the same result as "the range admits it".
+- VULN: the version resolved at S (the DEPENDS_ON or DIRECT_DEP target) is in the affected set.
+There is one edge per dependent per affected package. It points to the version that npm would pick.
 
     uv run python -m fallout.advisory [--incident npm-2025-09-08-chalk-debug]
 """
@@ -63,14 +63,15 @@ MALWARE = re.compile(r"\b(malware|malicious)\b", re.I)
 
 
 def advisory_kind(advisory_id: str, doc: dict[str, Any]) -> str:
-    """MAL- records, and GHSA records for embedded malware (ua-parser-js, rc, coa, event-stream)."""
+    """Classifies an advisory. MAL- records are MALICIOUS. GHSA records for embedded malware
+    (ua-parser-js, rc, coa, event-stream) are also MALICIOUS. All others are VULN."""
     if advisory_id.startswith("MAL-"):
         return "MALICIOUS"
     return "MALICIOUS" if MALWARE.search(doc.get("summary") or "") else "VULN"
 
 
 def osv_range(events: list[dict[str, str]]) -> str | None:
-    """OSV SEMVER/ECOSYSTEM events -> one npm semver range (`||` of `>=a <b` / `>=a <=c`)."""
+    """Converts OSV SEMVER or ECOSYSTEM events to one npm semver range (`||` of `>=a <b` or `>=a <=c`)."""
     parts, lo = [], None
     for e in events:
         if "introduced" in e:
@@ -85,8 +86,9 @@ def osv_range(events: list[dict[str, str]]) -> str | None:
 
 
 async def affected_from_osv(client: Any, advisory_id: str, doc: dict[str, Any]) -> list[dict[str, Any]]:
-    """Concrete affected npm versions: OSV's explicit `versions` list, else its ranges expanded
-    against the registry packument with npm semver (most GHSA records carry ranges only)."""
+    """Returns the affected npm versions. It uses OSV's `versions` list if there is one. If not, it
+    matches the OSV ranges against the registry packument with npm semver. Most GHSA records
+    have only ranges."""
     from ingest.anchor import REGISTRY
     from ingest.http import encode_pkg
 
@@ -122,12 +124,13 @@ async def affected_from_osv(client: Any, advisory_id: str, doc: dict[str, Any]) 
 async def fetch(
     advisory_ids: list[str], kind: str | None = None
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-    """OSV records -> (advisory rows, affected version rows with registry publish times).
+    """Converts OSV records to (advisory rows, affected version rows with registry publish times).
 
-    Malicious versions keep their registry publish time; when the registry no longer lists one
-    (versions unpublished years ago), the advisory's OSV publish time stands in. Vulnerable
-    versions published after S did not exist at S and are dropped. `kind` overrides the
-    per-record classification (GHSA-mh6f-8j2x-4483 is malware but does not say so).
+    Malicious versions keep their registry publish time. If the registry no longer lists a
+    version (for example, it was unpublished years ago), the advisory's OSV publish time is used.
+    Vulnerable versions published after S did not exist at S, so they are dropped. `kind`
+    replaces the per-record classification (GHSA-mh6f-8j2x-4483 is malware, but its summary
+    does not say so).
     """
     from ingest.anchor import iso_ms, publish_time
     from ingest.http import CachedClient
@@ -194,8 +197,9 @@ async def fetch(
 def would_pick_malicious(
     candidates: list[dict[str, Any]], malicious: dict[str, list[dict[str, Any]]]
 ) -> tuple[list[dict[str, Any]], list[dict[str, str]]]:
-    """For each candidate (dependent, requirement) into a package with malicious versions,
-    resolve as of the last malicious publish with those versions injected."""
+    """Resolves each candidate (dependent, requirement) on a package with malicious versions.
+    The malicious versions are added to the packument, and resolution uses the time of the
+    last malicious publish."""
     docs = asyncio.run(packuments(set(malicious)))
     groups: dict[str, list[dict[str, str]]] = defaultdict(list)
     befores: dict[str, str] = {}
@@ -211,7 +215,7 @@ def would_pick_malicious(
         groups[pkg].append({"id": i, "range": rng})
 
     picked: dict[tuple[str, str], dict[str, Any]] = {}
-    for pkg, reqs in groups.items():  # one resolver run per package: `before` differs
+    for pkg, reqs in groups.items():  # one resolver run per package, because `before` is different for each
         results = node.resolve([{"packument": docs[pkg], "requests": reqs}], befores[pkg])
         for r in reqs:
             picked[ids[r["id"]]] = results[r["id"]]
@@ -233,7 +237,7 @@ def would_pick_malicious(
 def resolve_edges(
     candidates: list[dict[str, Any]], affected: list[dict[str, Any]]
 ) -> tuple[list[dict[str, Any]], list[dict[str, str]]]:
-    """Candidate (dependent, requirement) edges -> the CAN_RESOLVE_TO edges under rule D1."""
+    """Converts candidate (dependent, requirement) edges to CAN_RESOLVE_TO edges with rule D1."""
     malicious: dict[str, list[dict[str, Any]]] = defaultdict(list)
     vuln: dict[str, set[str]] = defaultdict(set)
     for a in affected:
@@ -268,8 +272,8 @@ def iso_from_ms(ms: int) -> str:
 
 
 def recompute_repo_edges(g: Any, incident_id: str, repo_key: str) -> list[dict[str, Any]]:
-    """Redo CAN_RESOLVE_TO for one repo's direct requirements after its manifest changed
-    (recheck_repo). Version-level edges do not depend on the repo and are left alone."""
+    """Recomputes CAN_RESOLVE_TO for one repo's direct requirements after its manifest changes
+    (recheck_repo). Version-level edges do not depend on the repo, so they do not change."""
     affected = [
         {**a, "published_iso": iso_from_ms(a["published_at"]) if a["published_at"] else None}
         for a in rows_of(g, "affected_rows", {"incident": incident_id})

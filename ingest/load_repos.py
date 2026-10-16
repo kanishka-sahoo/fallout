@@ -1,8 +1,9 @@
-"""Load the demo repos into FalkorDB (BUILD.md §5.5 step 6): Repo, DIRECT_DEP (resolved at S),
-LOCKS and OVERRIDES. Reads the checkouts that repo_seeds.py cloned.
+"""Loads the demo repos into FalkorDB: Repo, DIRECT_DEP (resolved at S), LOCKS and OVERRIDES.
+Reads the checkouts that repo_seeds.py cloned.
 
-Fails loudly when a direct dependency resolves to a version the crawl never expanded: an
-uncrawled target has no outgoing DEPENDS_ON edges and would silently truncate every path.
+Raises an error if a direct dependency resolves to a version that the crawl did not expand.
+A version that was not crawled has no outgoing DEPENDS_ON edges, so every path through it
+would stop there without an error.
 
     uv run python -m ingest.load_repos [--repo fallout-demo/billing-api]
 """
@@ -61,7 +62,8 @@ def write_repo(g: Graph, snap: RepoSnapshot, head_sha: str | None, default_branc
         direct.append({"to": key, "requirement": d.range, "scope": d.scope})
     if bad:
         raise UncrawledDependency(
-            f"{snap.full_name}: direct deps with no crawl record (rerun repo_seeds + crawl): {bad}"
+            f"{snap.full_name}: direct dependencies with no crawl record (run repo_seeds and crawl again): "
+            f"{bad}"
         )
 
     key = repo_key(snap.full_name)
@@ -115,7 +117,7 @@ def load_repo(g: Graph, full_name: str, repo_dir: Path | None = None) -> RepoSna
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--repo", action="append", help="full name; default: every allowed repo")
+    ap.add_argument("--repo", action="append", help="full repo name (default: every allowed repo)")
     args = ap.parse_args()
     g = graph()
     for full_name in args.repo or SETTINGS["allowed_repos"]:

@@ -1,13 +1,13 @@
-"""Time-anchored dependency closure (BUILD.md §5.2).
+"""Crawls the transitive dependency tree as it was at snapshot time S.
 
-Breadth-first from the seeds and repo direct deps. Each level:
-  1. fetch the version list of every package in the frontier (deps.dev, once per package),
-  2. synthesize a packument limited to versions published at or before S,
-  3. resolve every new (name, range) pair in one resolver.mjs batch (npm-pick-manifest, before=S),
-  4. fetch `:requirements` for each newly discovered version and enqueue its dependencies.
+The crawl is breadth-first from the seeds and the direct dependencies of the repos. For each level:
+  1. Get the version list of every package in the frontier (deps.dev, once per package).
+  2. Build a packument that has only the versions published at or before S.
+  3. Resolve every new (name, range) pair in one resolver.mjs batch (npm-pick-manifest, before=S).
+  4. Get `:requirements` for each new version and add its dependencies to the next frontier.
 
-Every HTTP response is cached on disk, so re-running after a crash, or with a larger
---limit, only pays for what is new. Outputs go to data/raw/crawl/*.jsonl.
+Every HTTP response is cached on disk. A second run, after a crash or with a larger --limit,
+sends requests only for new data. The output goes to data/raw/crawl/*.jsonl.
 
     uv run python -m ingest.crawl [--limit N] [--concurrency 32]
 """
@@ -50,7 +50,7 @@ def epoch_ms(ts: str) -> int:
 
 @dataclass(frozen=True)
 class Want:
-    """A dependency to resolve: `parent` (a Version key, or None for a seed) needs `name@range`."""
+    """A dependency to resolve. `parent` (a Version key, or None for a seed) requires `name@range`."""
 
     parent: str | None
     name: str
@@ -72,7 +72,7 @@ class Crawl:
     pruned: dict[str, int] = field(default_factory=dict)
     spam: set[str] = field(default_factory=set)
 
-    # -- step 1-2: version lists -> packuments at S --------------------------------------------
+    # -- steps 1-2: version lists to packuments at S -------------------------------------------
     async def load_packument(self, name: str) -> None:
         doc = await self.client.get_json(DEPS_PKG.format(name=encode_pkg(name)))
         if doc is None:
@@ -127,7 +127,7 @@ class Crawl:
         registry = []
         for w in frontier:
             alias = NPM_ALIAS.match(w.range.strip())
-            if alias:  # `"wrap-ansi-cjs": "npm:wrap-ansi@^7"` installs the real wrap-ansi
+            if alias:  # `"wrap-ansi-cjs": "npm:wrap-ansi@^7"` installs wrap-ansi
                 w = Want(w.parent, alias[1], alias[2] or "*", w.kind)
             if NON_REGISTRY.match(w.range.strip()):
                 self.unresolved.append({**w.__dict__, "reason": "non_registry_spec"})
@@ -194,13 +194,13 @@ class Crawl:
             )
 
     def prune_spam(self, min_missing: int = 10, min_ratio: float = 0.2) -> None:
-        """Drop registry-spam clusters (e.g. tea.xyz token farming) that npm removed after S.
+        """Removes registry-spam clusters (for example, tea.xyz token farming) that npm removed after S.
 
-        A version is spam when at least `min_missing` of its dependencies, and at least
-        `min_ratio` of them, name packages that no longer exist or are themselves spam. Spam
-        versions are removed, then only what is still reachable from the seed and repo roots
-        is kept. Real packages
-        do not depend on these clusters, but left in they would distort PageRank.
+        A version is spam if at least `min_missing` of its dependencies, and at least
+        `min_ratio` of them, are packages that no longer exist or are spam. The spam versions
+        are removed. Then only the versions that the seed and repo roots can still reach are
+        kept. Real packages do not depend on these clusters, but the clusters would distort
+        PageRank if they stayed in the graph.
         """
         missing: Counter[str] = Counter()
         for u in self.unresolved:
@@ -210,7 +210,7 @@ class Crawl:
         for e in self.edges:
             out_edges[e["from"]].append(e["to"])
 
-        # Spam depends on spam: iterate until no new version qualifies.
+        # Spam depends on spam, so repeat until no new version is spam.
         spam: set[str] = set()
         while True:
             found = set()

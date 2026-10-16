@@ -1,7 +1,8 @@
-"""Aggregate concentration-of-risk findings for the write-up (BUILD.md §7.7, docs/blog.md).
+"""Computes aggregate concentration-risk numbers for the write-up (docs/blog.md).
 
-Numbers only, never a ranking of people: how few accounts reach how much of the graph, and how
-many central packages rest on a single maintainer without provenance.
+The report has numbers only and does not rank people. It shows how much of the graph a small
+number of accounts can reach, and how many central packages have a single maintainer and no
+provenance.
 
     uv run python -m analysis.ecosystem_report      # writes analysis/ecosystem_report.json
 """
@@ -43,7 +44,7 @@ def main() -> None:
     cands = rows(g, "maintainer_candidates", {"k": 300})
     reach = {c["maintainer"]: reverse_reach(c["packages"], dependents) for c in cands}
 
-    # Greedy cover: how many accounts, taken over, reach a given share of the graph's packages.
+    # Greedy cover: the number of compromised accounts needed to reach a given share of the graph's packages.
     covered: set[str] = set()
     curve: list[float] = []
     remaining = dict(reach)

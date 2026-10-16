@@ -1,11 +1,11 @@
-"""Maintainers, publishers, provenance and weekly downloads for the crawled closure
-(BUILD.md §5.1, §5.5 step 4).
+"""Gets maintainers, publishers, provenance and weekly downloads for the crawled dependency tree.
 
-Per version: `GET registry.npmjs.org/{name}/{version}` -> `_npmUser` (publisher),
-`maintainers[]` and `dist.attestations.provenance`. Only usernames are kept, never emails.
-Per package: `api.npmjs.org/downloads/point/last-week`, in bulk for unscoped names (<=128 per
-call); the API refuses scoped names in bulk, so those go one at a time at lower concurrency.
-Download counts are current, not as of S (a stated limitation): weighting and display only.
+For each version, `GET registry.npmjs.org/{name}/{version}` gives `_npmUser` (the publisher),
+`maintainers[]` and `dist.attestations.provenance`. Only usernames are kept, not emails.
+For each package, `api.npmjs.org/downloads/point/last-week` gives the downloads. Unscoped names
+go in bulk requests (up to 128 per request). The API does not accept scoped names in bulk, so
+those go one at a time with lower concurrency. The download counts are current, not as of S
+(a documented limitation). They are used only for weighting and display.
 
     uv run python -m ingest.crawl_npm [--concurrency 32] [--downloads-interval 1.5]
 """
@@ -55,9 +55,9 @@ async def downloads(client: CachedClient, names: list[str]) -> dict[str, int | N
         try:
             doc = await client.get_json(DOWNLOADS.format(names=",".join(chunk))) or {}
         except RetryableStatus:
-            failed.extend(chunk)  # not cached, so a rerun retries only these
+            failed.extend(chunk)  # not cached, so the next run retries only these
             return
-        if len(chunk) == 1:  # a single name returns the point object, not a map
+        if len(chunk) == 1:  # for a single name, the API returns the point object, not a map
             doc = {chunk[0]: doc}
         for n in chunk:
             out[n] = (doc.get(n) or {}).get("downloads")
@@ -78,7 +78,7 @@ async def downloads(client: CachedClient, names: list[str]) -> dict[str, int | N
         *(single(n) for n in scoped),
     )
     if failed:
-        print(f"  downloads: {len(failed)} packages still rate-limited; rerun to fill them in", flush=True)
+        print(f"  downloads: {len(failed)} packages still rate-limited. Run again to get them.", flush=True)
     return out
 
 

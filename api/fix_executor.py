@@ -1,11 +1,15 @@
-"""apply_fix: the only path from a plan to GitHub (BUILD.md §6.3). Called by the API right
-after a human clicks Approve; never exposed as an MCP tool.
+"""apply_fix is the only code path from a plan to GitHub. The API calls it after a person clicks
+Approve. It is not an MCP tool.
 
-    verify token (HMAC, expiry, single use) + allowlist + plan still AWAITING_APPROVAL
-    -> sandbox: npm install --package-lock-only --ignore-scripts --before=S (no secrets)
-    -> verify: no locked version is in the incident's affected set
-    -> PR through the GitHub API, body = advisory + graph paths + rationale + verification
-    -> Action node (ON repo, REMEDIATES incident) -> recheck_repo on the PR branch
+    1. Check the token (HMAC, expiry, single use), the repo allowlist, and that the plan
+       is still AWAITING_APPROVAL.
+    2. In the sandbox, run npm install --package-lock-only --ignore-scripts --before=S.
+       The sandbox has no secrets.
+    3. Check that no locked version is in the incident's affected set.
+    4. Open a PR through the GitHub API. The body has the advisories, the graph paths,
+       the rationale and the verification result.
+    5. Write an Action node (ON the repo, REMEDIATES the incident), then run recheck_repo
+       on the PR branch.
 """
 
 from __future__ import annotations
@@ -47,46 +51,57 @@ def render_path(p: dict[str, Any]) -> str:
 def pr_body(plan: dict[str, Any], advisories: list[dict[str, Any]], verification: dict[str, Any]) -> str:
     body = plan["body"]
     out = [
-        f"## Fallout: remediate `{body['incident']}`",
+        f"## Fallout: remediation for `{body['incident']}`",
         "",
-        f"Status before: **{body['status_before']}**. Anchor S = `{body['anchor_S']}` "
-        "(npm graph and resolution as of just before the first malicious publish).",
+        f"Status before this change: **{body['status_before']}**.",
+        "",
+        f"Snapshot time S: `{body['anchor_S']}`. The dependency graph and version resolution use the "
+        "npm registry as it was at S, one second before the first malicious version was published.",
         "",
         "### Advisories",
         *[f"- [{a['id']}]({a['url']}): `{a['package']}@{a['version']}`" for a in advisories],
         "",
-        "### Why this repo is exposed (graph paths, requirement on every hop)",
+        "### Why this repo is exposed",
+        "",
+        "Each path goes from this repo to an affected version. Each hop shows the edge type and "
+        "the version requirement.",
     ]
     for p in body["paths"]:
         out += ["", f"**{p['package']}** (`{p['id']}`)", "", render_path(p)]
     out += ["", "### Change", "", "```json", json.dumps(body["changes"], indent=2), "```", ""]
+    out += ["### Rationale", ""]
     for p in body["packages"]:
         reqs = ", ".join(f"`{r}`" for r in sorted({r["requirement"] for r in p["requirements"]}))
         if p["strategy"] == "selector":
             why = (
-                f"override every edge whose range admits the affected version with `{p['version']}`, "
-                f"the highest safe version published ≤ S that satisfies {reqs}"
+                f"A version-specific override changes the affected version to `{p['version']}`. "
+                f"This is the highest safe version, published at or before S, that satisfies {reqs}."
             )
         elif p["strategy"] == "pin":
-            why = f"pin the direct dependency to `{p['version']}` (highest safe version ≤ S in its range)"
+            why = (
+                f"The direct dependency is pinned to `{p['version']}`. This is the highest safe "
+                "version in its range, published at or before S."
+            )
         else:
             scoped = ", ".join(f"`{k}` → `{v}`" for k, v in p["scoped"].items())
-            why = f"scoped overrides {scoped} (no single safe version satisfies {reqs})"
+            why = f"Nested overrides: {scoped}. No single safe version satisfies {reqs}."
         out.append(f"- `{p['package']}`: {why}")
     v = verification
     out += [
         "",
-        "### Verification (sandbox, no secrets mounted)",
+        "### Verification",
         "",
-        f"`{v['command']}` → exit {v['exit_code']} in {v['took_ms']} ms; "
-        f"{v['locked_count']} packages locked.",
-        f"Affected versions in the new lockfile: **{len(v['affected_found'])}**"
+        "The install ran in a sandbox container with no secrets.",
+        "",
+        f"- Command: `{v['command']}`",
+        f"- Exit code {v['exit_code']}, {v['took_ms']} ms, {v['locked_count']} packages locked.",
+        f"- Affected versions in the new lockfile: **{len(v['affected_found'])}**"
         + (f" ({', '.join(v['affected_found'])})" if v["affected_found"] else ""),
-        f"Locked versions of the incident's packages: {', '.join(v['checked_versions']) or 'none'}",
+        f"- Locked versions of the incident's packages: {', '.join(v['checked_versions']) or 'none'}",
     ]
     if v.get("pruned"):
-        out.append(f"Lockfile entries at affected versions removed before the install: {v['pruned']}")
-    out += ["", f"Plan `{plan['id']}`, approved in the Fallout console. Opened by Fallout."]
+        out.append(f"- Lockfile entries at affected versions, removed before the install: {v['pruned']}")
+    out += ["", f"Plan `{plan['id']}` was approved in the Fallout console. Fallout opened this pull request."]
     return "\n".join(out)
 
 
@@ -145,9 +160,9 @@ def apply_fix(plan_id: str, repo: str, token: str, approved_by: str, emit: Emit 
                 full,
                 branch,
                 files,
-                title=f"fix(deps): override {', '.join(pkgs)} away from {incident} malicious versions",
+                title=f"fix(deps): remove malicious versions of {', '.join(pkgs)} ({incident})",
                 body=pr_body(plan, advisories, v),
-                message=f"fix(deps): remediate {incident}\n\nFallout plan {plan_id}; verified in sandbox.",
+                message=f"fix(deps): remediate {incident}\n\nFallout plan {plan_id}, verified in a sandbox.",
             )
             emit("pr", source="fallout-api", plan=plan_id, repo=full, pr=pr.url)
             result = "PR_OPENED"

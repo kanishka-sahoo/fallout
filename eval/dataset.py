@@ -1,15 +1,15 @@
-"""Eval dataset (BUILD.md §8): advisory units x targets, labelled by the oracle and by the graph.
+"""Builds the eval dataset: advisory groups x targets, labelled by the oracle and by the graph.
 
-1. Each unit in eval/advisories.json is ingested as incident `eval-<unit>` and its blast
-   radius persisted (the graph side that System C's tools read).
+1. Each advisory group in eval/advisories.json is ingested as incident `eval-<unit>`, and its
+   blast radius is stored. This is the graph data that the System C tools read.
 2. Targets: the demo repos, a fixed random sample (seed 42) of seed packages at their version
-   at S, and a second stratum from the most-downloaded seeds (DECISIONS D11). The
-   incident-forced seeds (the chalk/duckdb packages) are left out.
-3. The oracle (eval/oracle/oracle.mjs, never reads FalkorDB) builds each target's ideal tree
-   once and labels it for every unit. Affected versions come straight from OSV/the registry
-   (fallout.advisory.fetch), not from the graph. Trees and lockfiles are kept for the
-   hallucination check and for System B.
-4. The graph label for every pair, for the disagreement analysis.
+   at S, and a second stratum from the most-downloaded seeds (DECISIONS D11). The seeds that
+   come from the incident (the chalk and duckdb packages) are not included.
+3. The oracle (eval/oracle/oracle.mjs) does not read FalkorDB. It builds each target's ideal
+   tree once and labels it for every advisory group. The affected versions come directly from
+   OSV and the registry (fallout.advisory.fetch), not from the graph. The trees and lockfiles
+   are kept for the hallucination check and for System B.
+4. The graph label for every pair is also recorded, for the disagreement analysis.
 
 Writes eval/dataset.json.
     uv run python -m eval.dataset [--targets 200] [--top-targets 300] [--jobs 8] [--skip-ingest]
@@ -59,7 +59,7 @@ def load_units() -> list[dict[str, Any]]:
 
 
 def affected_sets(units: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
-    """unit -> {mode, affected: {pkg: [versions]}} from OSV and the registry only."""
+    """Returns unit -> {mode, affected: {pkg: [versions]}}, from OSV and the registry only."""
     out = {}
     for u in units:
         _, affected = asyncio.run(fetch(u["advisories"], u["kind"]))
@@ -74,10 +74,11 @@ def affected_sets(units: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
 
 
 def sample_packages(n: int, n_big: int = 0, top: int = 3000) -> dict[str, str]:
-    """{target: stratum}. `random`: n seeds uniformly (seed 42). `top-downloads`: n_big more
-    from the `top` seeds by weekly downloads (seed 43). Uniform seeds are mostly leaves with
-    tiny trees, so they are almost never exposed; download rank is independent of any
-    exposure label, so the second stratum adds positives without favouring the graph."""
+    """Returns {target: stratum}. `random`: n seeds, sampled uniformly (seed 42). `top-downloads`:
+    n_big more, sampled from the `top` seeds by weekly downloads (seed 43). Uniform samples are
+    mostly leaf packages with small trees, so they are almost never exposed. The download rank
+    does not depend on any exposure label, so the second stratum adds positive cases without
+    a bias toward the graph."""
     seeds_doc = json.loads((RAW_DIR / "seeds.json").read_text())
     forced = set(seeds_doc.get("forced", []))
     at_s = crawl_resolutions()
@@ -164,7 +165,7 @@ def graph_labels(targets: list[str], units: list[dict[str, Any]]) -> dict[tuple[
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--targets", type=int, default=200)
-    ap.add_argument("--top-targets", type=int, default=300, help="extra targets, top 3000 by downloads")
+    ap.add_argument("--top-targets", type=int, default=300, help="targets from the top 3000 by downloads")
     ap.add_argument("--jobs", type=int, default=8)
     ap.add_argument("--skip-ingest", action="store_true")
     args = ap.parse_args()

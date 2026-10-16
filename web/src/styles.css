@@ -1,5 +1,5 @@
-/* Fallout console. A survey sheet, not a war room: cool paper, ink, and one hot-to-cold ramp
-   that means "hops from the malicious version". Colour is reserved for that ramp and for status. */
+/* Fallout console styles. Colour is used only for the hop scale (distance from the malicious
+   version, red to grey-blue) and for status. */
 
 :root {
   --paper: #eef1f2;
@@ -95,7 +95,7 @@ a { color: var(--ink); text-decoration-thickness: 1px; text-underline-offset: 2p
 .btn.quiet { background: transparent; color: var(--ink); }
 .btn.approve { background: var(--safe); border-color: var(--safe); }
 
-/* -- the blast wave: one band per hop ------------------------------------------------------- */
+/* -- blast radius: one band per hop --------------------------------------------------------- */
 
 .wave {
   display: grid;
@@ -258,7 +258,7 @@ a { color: var(--ink); text-decoration-thickness: 1px; text-underline-offset: 2p
 .pathsel button .m { color: var(--safe); }
 .pathsel button[aria-pressed="true"] .m { color: #9fd3c5; }
 
-/* A trace, top to bottom: each node, then the requirement that leads to the next one. */
+/* Dependency path, top to bottom. Each node is followed by the requirement that leads to the next node. */
 ol.chain { list-style: none; margin: 12px 0 0; padding: 0; }
 ol.chain li { display: grid; grid-template-columns: 14px minmax(0, 1fr); column-gap: 10px; }
 ol.chain .rail { grid-row: span 2; position: relative; }

@@ -1,5 +1,5 @@
 import type { Path } from '../api'
-import { short } from '../api'
+import { short, statusLabel } from '../api'
 
 export type Selection = {
   key: string
@@ -27,7 +27,7 @@ export function Chain({ path }: { path: Path }) {
             {next ? (
               <span className={`req ${next.type === 'CAN_RESOLVE_TO' ? 'crt' : ''}`}>
                 {next.type === 'CAN_RESOLVE_TO'
-                  ? `requires ${next.requirement}, npm would pick the malicious release`
+                  ? `requires ${next.requirement}. npm resolves this to the malicious version.`
                   : `requires ${next.requirement ?? '?'}${next.type === 'DIRECT_DEP' ? ' (direct dependency)' : ''}`}
               </span>
             ) : <span />}
@@ -44,7 +44,7 @@ export function Inspector({ sel, pathId, onPath, onClose }: Props) {
     <section className="inspector" aria-label="Exposure path">
       <header>
         <h2>{sel.title}</h2>
-        {sel.status ? <span className="status" data-s={sel.status}>{sel.status.replaceAll('_', ' ').toLowerCase()}</span> : null}
+        {sel.status ? <span className="status" data-s={sel.status}>{statusLabel(sel.status)}</span> : null}
         <button className="btn quiet close" onClick={onClose}>Close</button>
       </header>
       {sel.meaning ? <p className="meaning">{sel.meaning}</p> : null}
@@ -54,7 +54,7 @@ export function Inspector({ sel, pathId, onPath, onClose }: Props) {
           {sel.paths.map((p) => (
             <button key={p.id} aria-pressed={p.id === path?.id} onClick={() => onPath(p.id)}>
               {p.package ?? short(p.nodes[p.nodes.length - 1])}
-              {p.mitigated ? <span className="m">, mitigated</span> : null}
+              {p.mitigated ? <span className="m"> (mitigated)</span> : null}
             </button>
           ))}
         </div>
@@ -62,10 +62,10 @@ export function Inspector({ sel, pathId, onPath, onClose }: Props) {
       {path ? (
         <>
           <Chain path={path} />
-          <div className="pid">path <span className="id">{path.id}</span>, {path.edges.length} hops, every requirement as declared at S</div>
+          <div className="pid">Path <span className="id">{path.id}</span>. {path.edges.length} hop{path.edges.length === 1 ? '' : 's'}. Requirements as declared at snapshot time (S).</div>
         </>
       ) : !sel.error ? (
-        <p className="meaning">Not reached: no requirement on this tree would pick an affected version.</p>
+        <p className="meaning">Not reached. No requirement in this dependency tree resolves to an affected version.</p>
       ) : null}
     </section>
   )

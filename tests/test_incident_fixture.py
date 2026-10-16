@@ -1,4 +1,4 @@
-"""The replay incident's affected versions, as sourced from OSV, equal BUILD.md §5.3."""
+"""Tests that the replay incident's affected versions from OSV match the list in the spec (BUILD.md §5.3)."""
 
 from fallout.settings import load_anchor
 

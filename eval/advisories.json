@@ -1,5 +1,5 @@
 {
-  "_doc": "BUILD.md §8 advisory set. IDs were chosen by querying OSV (scratch/osv_pick.py); affected versions are always fetched from OSV at ingest, never hardcoded. Each unit is ingested as its own incident `eval-<unit>`.",
+  "_doc": "The eval advisory groups. The IDs were selected with OSV queries (scratch/osv_pick.py). The affected versions are fetched from OSV at ingest and are not stored here. Each advisory group is ingested as a separate incident, `eval-<unit>`.",
   "units": [
     {"unit": "chalk-debug", "title": "Sep 8 2025 chalk/debug account takeover (batch 1)", "kind": "MALICIOUS",
      "advisories": ["MAL-2025-46967", "MAL-2025-46974", "MAL-2025-46969", "MAL-2025-46981", "MAL-2025-46980", "MAL-2025-46966", "MAL-2025-46983", "MAL-2025-46971", "MAL-2025-46972", "MAL-2025-46977", "MAL-2025-46979", "MAL-2025-46975", "MAL-2025-46985", "MAL-2025-46973", "MAL-2025-46978", "MAL-2025-46982", "MAL-2025-46976", "MAL-2025-46970", "MAL-2025-46968"]},

@@ -1,5 +1,5 @@
-"""Seed package list (BUILD.md §5.1): the top of npm-high-impact, plus every package named in
-the replay incident. Repo direct dependencies are added separately by repo_seeds.py.
+"""Writes the seed package list: the top packages of npm-high-impact and every package in the
+replay incident. repo_seeds.py adds the direct dependencies of the repos separately.
 
     uv run python -m ingest.seed --limit 5000
 """
@@ -36,7 +36,7 @@ def main() -> None:
     seeds = list(dict.fromkeys([*incident, *ranked[: args.limit]]))
     RAW_DIR.mkdir(parents=True, exist_ok=True)
     SEEDS_PATH.write_text(json.dumps({"limit": args.limit, "forced": incident, "seeds": seeds}, indent=1))
-    print(f"{len(seeds)} seeds ({len(incident)} forced from the incident) -> {SEEDS_PATH}")
+    print(f"{len(seeds)} seeds ({len(incident)} added from the incident) -> {SEEDS_PATH}")
 
 
 if __name__ == "__main__":

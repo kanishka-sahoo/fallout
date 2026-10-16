@@ -1,12 +1,12 @@
-"""BUILD.md §10 demo script, headless, through the real API (in-process TestClient, so the
-lifespan starts the MCP server exactly as uvicorn would).
+"""Runs the demo script without a browser, through the real API. It uses an in-process
+TestClient, so the lifespan starts the MCP server in the same way as uvicorn.
 
     uv run python -m api.demo [--repo billing-api] [--no-approve]
     uv run python -m api.demo --reset
 
-Step 5 clicks Approve: it opens a real PR in the demo org and rechecks the PR branch, which
-leaves the graph showing that branch. `--reset` reloads every repo from its local checkout
-of the default branch and recomputes the repo edges and statuses.
+Step 5 clicks Approve. This opens a real PR in the demo org and rechecks the PR branch, so
+the graph then shows that branch. `--reset` reloads every repo from its local checkout of the
+default branch, and recomputes the repo edges and statuses.
 """
 
 from __future__ import annotations
@@ -64,7 +64,7 @@ def main() -> None:
             calls = ", ".join(t["name"] for t in r["tool_calls"])
             say(msg, f"[tools: {calls}] [cited: {r['cited_path_ids']}]\n{r['text']}")
             if r["unknown_path_ids"]:
-                sys.exit(f"answer cites path ids no tool returned: {r['unknown_path_ids']}")
+                sys.exit(f"answer cites path ids that no tool returned: {r['unknown_path_ids']}")
             return r
 
         chat("Ingest the chalk/debug advisories and replay the incident.")
@@ -78,7 +78,7 @@ def main() -> None:
         plan = c.get(f"/api/plans/{plan_id}").json()
         say("approval card", f"{plan_id} {plan['status']} {json.dumps(plan['body']['changes'])}")
 
-        # Without the console session nothing can approve.
+        # Approval must fail without a console session.
         assert c.post(f"/api/plans/{plan_id}/approve").status_code == 401
 
         if not args.no_approve:
@@ -97,7 +97,7 @@ def main() -> None:
                 f"action: {res['action_id']}",
             )
             if rc.get("after", {}).get("status") != "MITIGATED_BY_OVERRIDE":
-                sys.exit("status did not flip to MITIGATED_BY_OVERRIDE")
+                sys.exit("status did not change to MITIGATED_BY_OVERRIDE")
 
         chat("Zoom out: which packages are the ecosystem's critical chokepoints by pagerank?")
         chat("Which maintainers have the largest reach?")

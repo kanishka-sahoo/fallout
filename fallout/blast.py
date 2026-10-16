@@ -1,4 +1,4 @@
-"""Blast radius, exposure paths and repo status (BUILD.md §7.3–7.5).
+"""Blast radius, exposure paths and repo status.
 
 uv run python -m fallout.blast [--incident npm-2025-09-08-chalk-debug]
 """
@@ -46,7 +46,7 @@ class Affected:
         return cls(frozenset(r["key"] for r in rs), frozenset(r["name"] for r in rs))
 
 
-# -- §7.3 BFS ------------------------------------------------------------------------------------
+# -- BFS -------------------------------------------------------------------------------------------
 
 
 def bfs(
@@ -56,8 +56,8 @@ def bfs(
     max_hops: int,
     on_hop: Callable[[int, list[tuple[str, Exposed]]], None] | None = None,
 ) -> tuple[dict[str, Exposed], bool]:
-    """Reverse BFS from the affected versions. Returns the first (hop, via) of every exposed
-    node, and whether `max_hops` cut the traversal short."""
+    """Runs a reverse BFS from the affected versions. Returns the first (hop, via) of every
+    exposed node, and True if the traversal stopped at `max_hops`."""
     visited: dict[str, Exposed] = {}
     frontier = sorted(affected.keys)
     for hop in range(1, max_hops + 1):
@@ -72,7 +72,7 @@ def bfs(
                 new.append((r["node"], e))
         if on_hop and new:
             on_hop(hop, new)
-        frontier = sorted(k for k, e in new if e.kind == "Version")  # repos are terminal
+        frontier = sorted(k for k, e in new if e.kind == "Version")  # repos are leaf nodes
         if not frontier:
             return visited, False
     return visited, True
@@ -86,7 +86,7 @@ def persist(g: Graph, incident: str, visited: dict[str, Exposed]) -> None:
             g.query(query(q), {"incident": incident, "rows": list(chunk)})
 
 
-# -- §7.4 paths ----------------------------------------------------------------------------------
+# -- paths ---------------------------------------------------------------------------------------
 
 
 def path_id(nodes: Iterable[str]) -> str:
@@ -96,8 +96,8 @@ def path_id(nodes: Iterable[str]) -> str:
 def exposure_path(
     g: Graph, incident: str, repo: str, affected: Affected, kind: str = "repo"
 ) -> dict[str, Any] | None:
-    """Walk the EXPOSES.via parent pointers from `repo` (or a Version key, kind="version")
-    back to an affected version."""
+    """Follows the EXPOSES.via parent pointers from `repo` back to an affected version.
+    With kind="version", `repo` is a Version key."""
     nodes, edges = [repo], []
     cur = repo
     while cur not in affected.keys:
@@ -117,13 +117,13 @@ def cross_check_path(g: Graph, incident: str, repo: str, malicious: str) -> dict
     if not rs:
         return None
     r = rs[0]
-    # shortestPath cannot filter by property; reject paths through another incident's edges (D3).
+    # shortestPath cannot filter on a property, so reject a path that uses another incident's edges (D3).
     if any(i is not None and i != incident for i in r["incidents"]):
         return None
     return {"id": path_id(r["chain"]), "nodes": r["chain"], "edges": r["requirements"]}
 
 
-# -- §7.5 status ---------------------------------------------------------------------------------
+# -- status -------------------------------------------------------------------------------------
 
 
 @dataclass(frozen=True)
@@ -136,8 +136,8 @@ class OverrideEntry:
 def closure_path(
     root: str, adj: dict[str, list[str]], names: dict[str, str], targets: set[str], blocked: set[str | None]
 ) -> list[str] | None:
-    """Shortest root -> target path through the resolved tree that never enters a version of a
-    `blocked` package, or None."""
+    """Returns the shortest path from root to a target through the resolved tree, or None.
+    The path does not go through a version of a `blocked` package."""
     prev: dict[str, str | None] = {root: None}
     queue = deque([root])
     while queue:
@@ -162,13 +162,13 @@ def override_covers(
     overrides: list[OverrideEntry],
     bad_versions: set[str],
 ) -> bool:
-    """True when the overrides for one affected package apply on every path to it.
+    """Returns True if the overrides for one affected package apply on every path to it.
 
     `dependents` are the nodes whose requirement on the package would pick an affected
-    version. A global override with a safe resolved version covers everything. Scoped ones
-    cover a path only if it passes through a version of their `parent` (npm applies a scoped
-    override anywhere beneath the parent), so: can the root still reach a dependent while
-    avoiding every safe-override parent?
+    version. A global override to a safe version covers all paths. A nested override covers a
+    path only if the path goes through a version of its `parent`, because npm applies a nested
+    override anywhere below the parent. The function checks whether the root can still reach a
+    dependent without going through a parent that has a safe override.
     """
     safe = [o for o in overrides if o.resolved_version and o.resolved_version not in bad_versions]
     if any(o.parent is None for o in safe):
@@ -179,7 +179,7 @@ def override_covers(
 def decide_status(
     *, exposed: bool, has_lockfile: bool, locked_affected: list[str], reachable: set[str], covered: set[str]
 ) -> str:
-    """BUILD.md §7.5, in order."""
+    """Returns the repo status. The checks run in priority order, and the first match wins."""
     if locked_affected:
         return LOCKED_MALICIOUS
     if not exposed:
@@ -193,7 +193,7 @@ def decide_status(
 
 @dataclass
 class Closure:
-    """A repo's resolved tree at S: DIRECT_DEP from the repo, then DEPENDS_ON."""
+    """A repo's transitive dependency tree at S: DIRECT_DEP edges from the repo, then DEPENDS_ON edges."""
 
     root: str
     adj: dict[str, list[str]] = field(default_factory=lambda: defaultdict(list))
@@ -225,7 +225,7 @@ class Closure:
         self.requirement[(parent, r["node"])] = r["requirement"]
 
     def path(self, nodes: list[str], last: dict[str, Any]) -> dict[str, Any]:
-        """A tool-shaped path: closure hops, then the CAN_RESOLVE_TO hop `last`."""
+        """Returns a path in the tool format: the dependency tree hops, then the CAN_RESOLVE_TO hop `last`."""
         edges = [
             {
                 "type": "DIRECT_DEP" if a == self.root else "DEPENDS_ON",
@@ -264,8 +264,8 @@ def repo_status(g: Graph, incident: str, repo: str, affected: Affected, exposed:
         if p in ovs and override_covers(repo, cl.adj, cl.names, set(dependents[p]), ovs[p], bad[p])
     }
 
-    # One path per affected package. Prefer a route no override covers: that is the one
-    # that explains why the package still counts.
+    # Keep one path per affected package. Prefer a path that no override covers, because
+    # that path explains why the package is still counted.
     by_package = []
     for p in sorted(reachable):
         blocked: set[str | None] = {o.parent for o in ovs.get(p, []) if o.parent}
@@ -295,7 +295,7 @@ def repo_status(g: Graph, incident: str, repo: str, affected: Affected, exposed:
     }
 
 
-# -- the whole pass ------------------------------------------------------------------------------
+# -- full run ------------------------------------------------------------------------------------
 
 
 @dataclass

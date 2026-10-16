@@ -1,5 +1,5 @@
-"""BUILD.md §14 approval: forged, expired, reused and wrong-repo tokens are rejected; a repo
-outside the allowlist is refused; no LLM-visible tool can open a PR."""
+"""Approval tests. The executor rejects forged, expired, reused and wrong-repo tokens. It refuses a
+repo that is not on the allowlist. No tool that the LLM can see can open a PR."""
 
 import asyncio
 import subprocess
@@ -25,8 +25,8 @@ def test_fresh_token_verifies_once() -> None:
     ("token", "plan", "repo", "match"),
     [
         ("9999999999." + "0" * 64, PLAN, REPO, "bad signature"),  # forged
-        (None, PLAN, "repo:fallout-demo/cli-tool", "bad signature"),  # minted for another repo
-        (None, "pl_other", REPO, "bad signature"),  # minted for another plan
+        (None, PLAN, "repo:fallout-demo/cli-tool", "bad signature"),  # issued for another repo
+        (None, "pl_other", REPO, "bad signature"),  # issued for another plan
         ("garbage", PLAN, REPO, "malformed"),
     ],
 )

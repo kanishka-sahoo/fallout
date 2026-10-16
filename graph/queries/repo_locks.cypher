@@ -1,5 +1,5 @@
-// A locked version the crawl never resolved still gets a node, so LOCKED_MALICIOUS and
-// lock-safe checks can see it. It has no DEPENDS_ON edges, so traversal ignores it.
+// Creates a node for a locked version even if the crawl did not resolve it. The LOCKED_MALICIOUS and
+// lock-safe checks need that node. It has no DEPENDS_ON edges, so traversal ignores it.
 UNWIND $rows AS row
 MERGE (p:Package {name: row.name})
 MERGE (v:Version {key: row.key})

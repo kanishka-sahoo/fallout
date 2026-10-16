@@ -1,4 +1,14 @@
-// Thin client for api/main.py. Every tool call goes through the same MCP server the agent uses.
+// Client for api/main.py. Tool calls use the same MCP server as the agent.
+
+// Display labels for repo status values. The API values do not change.
+export const STATUS_LABEL: Record<string, string> = {
+  LOCKED_MALICIOUS: 'Malicious version in lockfile',
+  EXPOSED_NO_LOCKFILE: 'Exposed (no lockfile)',
+  RANGE_ADMITS_LOCK_SAFE: 'Lockfile safe, range allows malicious version',
+  MITIGATED_BY_OVERRIDE: 'Mitigated by override',
+  NOT_AFFECTED: 'Not affected',
+}
+export const statusLabel = (s: string) => STATUS_LABEL[s] ?? s.replaceAll('_', ' ').toLowerCase()
 
 export type Edge = { type: string | null; requirement?: string | null }
 export type Path = { id: string; nodes: string[]; edges: Edge[] }

@@ -1,10 +1,12 @@
-"""Fallout API (BUILD.md §2, §6): agent chat over WebSocket or HTTP, the event stream, read
-endpoints for the console, and the approval endpoint that is the only way to the fix executor.
+"""The Fallout API. It provides agent chat over WebSocket or HTTP, the event stream, read
+endpoints for the console, and the approval endpoint. The approval endpoint is the only way
+to start the fix executor.
 
     uv run uvicorn api.main:app --port 8000
 
-Console session: POST /api/session with the console key (FALLOUT_CONSOLE_KEY; a random key is
-printed at startup when unset) sets an HttpOnly cookie. Approve requires that cookie.
+Console session: POST /api/session with the console key sets an HttpOnly cookie. The key is
+FALLOUT_CONSOLE_KEY. If it is not set, the API prints a random key at startup. The approve
+endpoint requires the cookie.
 """
 
 from __future__ import annotations
@@ -133,9 +135,9 @@ def events() -> list[dict[str, Any]]:
 
 @app.post("/api/tools/{name}")
 async def call_tool(name: str, request: Request) -> dict[str, Any]:
-    """Direct, read-only tool calls for the console (replay bar, repo table). Same MCP server."""
+    """Read-only tool calls from the console (replay bar, repo table), through the same MCP server."""
     if name not in {"blast_radius", "repo_status", "exposure_path", "critical_packages", "maintainer_reach"}:
-        raise HTTPException(403, "only read tools are callable directly")
+        raise HTTPException(403, "only read-only tools can be called directly")
     args = await request.json() if await request.body() else {}
     env = await state.tools.call(name, args)
     bus.emit("tool", tool=name, via="console", **(env.get("summary") or {}), took_ms=env.get("timing_ms"))
@@ -149,7 +151,7 @@ def incidents() -> list[dict[str, Any]]:
 
 @app.get("/api/graph/{incident}")
 def incident_graph(incident: str) -> dict[str, Any]:
-    """Affected versions (hop 0) plus every exposed node with its BFS parent, hop and status."""
+    """Returns the affected versions (hop 0) and every exposed node with its BFS parent, hop and status."""
     g = graph()
     affected = rows(g, "incident_affected_graph", {"incident": incident})
     exposed = rows(g, "incident_graph", {"incident": incident})
@@ -165,8 +167,8 @@ def incident_graph(incident: str) -> dict[str, Any]:
 
 @app.post("/api/replay/{incident}")
 async def replay(incident: str) -> dict[str, Any]:
-    """Re-ingest the advisories and recompute the blast radius, through the MCP tools so the
-    event log shows the same tool calls the agent makes."""
+    """Ingests the advisories again and recomputes the blast radius. This goes through the MCP
+    tools, so the event log shows the same tool calls that the agent makes."""
     ing = await state.tools.call("ingest_advisory", {"incident_id": incident})
     bus.emit("tool", tool="ingest_advisory", via="console", **(ing.get("summary") or {}))
     blast = await state.tools.call("blast_radius", {"incident_id": incident})
@@ -178,7 +180,7 @@ async def replay(incident: str) -> dict[str, Any]:
 def results() -> Any:
     path = ROOT / "eval" / "results.json"
     if not path.exists():
-        raise HTTPException(404, "no eval results yet: run python -m eval.run")
+        raise HTTPException(404, "no eval results yet. Run python -m eval.run")
     import json
 
     return json.loads(path.read_text())
@@ -225,7 +227,7 @@ async def approve(plan_id: str, fallout_session: str | None = Cookie(default=Non
         raise HTTPException(404, "no such plan")
     if p["status"] != fixplan.AWAITING_APPROVAL:
         raise HTTPException(409, f"plan is {p['status']}")
-    token = approval.mint(plan_id, p["repo"])  # never leaves this function except into apply_fix
+    token = approval.mint(plan_id, p["repo"])  # the token goes only to apply_fix
     bus.emit("approved", source="fallout-api", plan=plan_id, approved_by=user, step="apply_fix")
     try:
         out = await anyio.to_thread.run_sync(
@@ -276,7 +278,7 @@ async def ws(socket: WebSocket) -> None:
         bus.unsubscribe(q)
 
 
-# The built console (web/dist), when present. Mounted last so /api and /ws win.
+# Serves the built console (web/dist) if it exists. It is mounted last, so /api and /ws take precedence.
 _DIST = ROOT / "web" / "dist"
 if _DIST.exists():
     from fastapi.staticfiles import StaticFiles

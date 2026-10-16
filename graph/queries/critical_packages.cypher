@@ -1,4 +1,4 @@
-// BUILD.md §7.6: the tool reads the stored scores. $order is pagerank or betweenness.
+// Reads the stored centrality scores. $order is pagerank or betweenness.
 MATCH (p:Package) WHERE p.pagerank IS NOT NULL
 RETURN p.name AS package, p.pagerank AS pagerank, p.betweenness AS betweenness,
        p.weekly_downloads AS downloads, p.maintainer_count AS maintainers,

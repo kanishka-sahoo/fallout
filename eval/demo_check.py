@@ -1,16 +1,17 @@
-"""Friday gate (BUILD.md §12): check the graph's demo-repo exposure against the oracle.
+"""Demo-repo check: compares the graph's exposure of each demo repo with the oracle.
 
-For each demo repo the oracle builds npm's ideal tree at S from the manifests alone (the
-lockfile is left out: exposure is about what the ranges let npm pick) and reports every edge
-into an affected package that admits an affected version. That rule equals D1 for the replay
-because each malicious release was tagged `latest` and was the newest version. Compared:
-  - exposed or not,
-  - the set of affected packages reached (graph: minus those an override mitigates, since
-    arborist applies overrides while building the tree),
-  - each graph path: every intermediate name@version exists in the oracle tree,
-  - per affected package, the shortestPath cross-check (§7.4) has the same length as the path,
-  - agreement between the graph's resolved closure and the oracle tree.
-Writes eval/demo_check.json. Requires `fallout.blast` to have run for the incident.
+For each demo repo, the oracle builds npm's ideal tree at S from the manifests only. The
+lockfile is not used, because exposure is about the versions that the ranges let npm pick. The
+oracle reports every edge to an affected package that admits an affected version. For the
+replay, this rule gives the same result as D1, because each malicious release was tagged
+`latest` and was the newest version. The check compares:
+  - whether the repo is exposed,
+  - the set of affected packages that the repo reaches (for the graph, without the packages
+    that an override mitigates, because arborist applies overrides when it builds the tree),
+  - each graph path (every intermediate name@version must be in the oracle tree),
+  - for each affected package, the length of the shortestPath cross-check and of the path,
+  - the overlap between the graph's transitive dependency tree and the oracle tree.
+Writes eval/demo_check.json. Run `fallout.blast` for the incident first.
 
     uv run python -m eval.demo_check
 """

@@ -1,5 +1,5 @@
-// Concentric rings: the affected versions at the centre, hop k on ring k. Each ring is sorted
-// by the parent's angle, so a branch stays roughly where its parent is.
+// Radial layout. Affected versions are at the centre. Hop k is on ring k. Each ring is sorted
+// by the angle of the parent node, so a branch stays near its parent.
 import type { IncidentGraph } from './api'
 
 export type Placed = { x: number; y: number; hop: number; angle: number }
@@ -21,7 +21,7 @@ export function radialLayout(data: IncidentGraph): Map<string, Placed> {
     const ring = byHop.get(hop)!
     const parentAngle = (n: (typeof ring)[number]) => (n.via ? (out.get(n.via)?.angle ?? 0) : 0)
     ring.sort((a, b) => parentAngle(a) - parentAngle(b) || a.key.localeCompare(b.key))
-    // Rings get wider as they fill, so a crowded hop does not overlap the next one.
+    // A ring with more nodes gets a larger radius, so it does not overlap the next ring.
     const r = 0.55 + hop * (1 + Math.min(1.2, ring.length / 1500))
     ring.forEach((n, i) => {
       const angle = (2 * Math.PI * (i + 0.5)) / ring.length

@@ -1,6 +1,7 @@
-"""The agent loop (BUILD.md §6.1): LLM -> MCP call_tool -> result -> LLM, at most 12 tool calls
-per turn. Tools come from the fallout-tools MCP server over stdio, so the model's tool
-choice is literally MCP tool selection. Every call is emitted as a structured event.
+"""The agent loop. The LLM selects a tool, the loop calls it through MCP call_tool, and the
+result goes back to the LLM. The limit is 12 tool calls per turn. The tools come from the
+fallout-tools MCP server over stdio, so each tool choice by the model is an MCP tool call.
+The loop emits a structured event for every call.
 """
 
 from __future__ import annotations
@@ -47,7 +48,7 @@ Be concise: lead with the answer, then the cited path(s) with the requirement on
 
 
 class ToolClient:
-    """One long-lived MCP stdio session to mcp_server.server."""
+    """One persistent MCP stdio session to mcp_server.server."""
 
     def __init__(self) -> None:
         self._stack: AsyncExitStack | None = None
@@ -60,7 +61,7 @@ class ToolClient:
             command=sys.executable,
             args=["-m", "mcp_server.server"],
             cwd=str(ROOT),
-            # No GitHub token in the tool server's environment: nothing LLM-visible can write to GitHub.
+            # The tool server gets no GitHub token, so no tool that the LLM can call can write to GitHub.
             env={
                 "FALLOUT_GH_TOKEN": "",
                 **{
@@ -133,7 +134,7 @@ class AgentResult:
 
 
 def llm_view(envelope: dict[str, Any]) -> str:
-    """What the model sees of a tool result: everything but the timing noise."""
+    """Returns the part of a tool result that the model sees. Timing data is removed."""
     return json.dumps({k: envelope.get(k) for k in ("result", "paths", "cypher")}, separators=(",", ":"))
 
 
@@ -158,7 +159,7 @@ class Agent:
         schema: dict[str, Any] | None = None,
         instructions: str | None = None,
     ) -> AgentResult:
-        """One user turn. `schema` asks for a structured final answer (the eval)."""
+        """Runs one turn of the conversation. The eval sets `schema` to get a structured final answer."""
         t0 = time.monotonic()
         out = AgentResult(text="", offline=self.llm.offline)
         instructions = instructions or system_prompt()

@@ -1,8 +1,9 @@
-"""Polite, resumable HTTP for every ingest stage (BUILD.md §5, §5.1 crawler rules).
+"""Rate-limited, resumable HTTP client for every ingest stage.
 
-Responses are cached on disk keyed by a hash of method + URL + body, so re-runs cost
-nothing and a killed crawl resumes where it stopped. 404s are cached too: a missing
-package stays missing. 429/5xx and transport errors retry with exponential backoff.
+Responses are cached on disk. The cache key is a hash of the method, URL and body, so a
+second run sends no requests, and a stopped crawl continues from where it stopped. 404
+responses are also cached, because a missing package stays missing. 429 and 5xx responses
+and transport errors are retried with exponential backoff.
 """
 
 from __future__ import annotations
@@ -38,13 +39,14 @@ def _retryable(exc: BaseException) -> bool:
 
 
 def encode_pkg(name: str) -> str:
-    """URL-encode a package name for path segments: `@a/b` -> `%40a%2Fb`."""
+    """URL-encodes a package name for a path segment: `@a/b` -> `%40a%2Fb`."""
     return quote(name, safe="")
 
 
 class CachedClient:
     def __init__(self, cache_dir: Path = CACHE_DIR, concurrency: int = 16, min_interval: float = 0.0) -> None:
-        """`min_interval` paces network requests (seconds between starts); cache hits are free."""
+        """`min_interval` is the minimum time in seconds between the starts of network requests.
+        Cache hits do not wait."""
         self.cache_dir = cache_dir
         self._sem = asyncio.Semaphore(concurrency)
         self._min_interval = min_interval
@@ -70,7 +72,7 @@ class CachedClient:
         return self.cache_dir / h[:2] / f"{h}.json"
 
     async def get_json(self, url: str, headers: dict[str, str] | None = None) -> Any | None:
-        """Return the parsed body, or None for a 404."""
+        """Returns the parsed body, or None for a 404."""
         return await self._fetch("GET", url, None, headers)
 
     async def post_json(self, url: str, body: Any) -> Any | None:
@@ -107,7 +109,7 @@ class CachedClient:
                     self._next_slot = loop.time() + self._min_interval
             resp = await self._client.request(method, url, json=body, headers=headers)
             if resp.status_code == 429:
-                # Hold the slot while honouring Retry-After so the whole client slows down.
+                # Keep the semaphore slot during the Retry-After wait, so the whole client slows down.
                 retry_after = resp.headers.get("retry-after", "")
                 await asyncio.sleep(min(float(retry_after), 300) if retry_after.isdigit() else 5)
         if resp.status_code == 404:

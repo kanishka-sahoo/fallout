@@ -1,4 +1,4 @@
-// BUILD.md §4.3. One statement per line; run before loading.
+// Graph indexes. Write one statement per line. Run this file before loading data.
 CREATE INDEX FOR (p:Package) ON (p.name)
 CREATE INDEX FOR (v:Version) ON (v.key)
 CREATE INDEX FOR (v:Version) ON (v.name)

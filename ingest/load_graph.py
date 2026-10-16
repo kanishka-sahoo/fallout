@@ -1,9 +1,9 @@
-"""Load the crawl into FalkorDB (BUILD.md §5.5 step 5), in UNWIND batches of 1,000:
-indexes, Package/Version/HAS_VERSION, DEPENDS_ON, then the npm metadata from crawl_npm.py
-(Maintainer, MAINTAINS, PUBLISHED, and per-package downloads, maintainer count, provenance).
+"""Loads the crawl into FalkorDB in UNWIND batches of 1,000. The order is: indexes,
+Package/Version/HAS_VERSION, DEPENDS_ON, then the npm metadata from crawl_npm.py (Maintainer,
+MAINTAINS, PUBLISHED, and the downloads, maintainer count and provenance of each package).
 
-A package's maintainers and provenance are taken from its newest version in the graph, which
-stands in for the version that was `latest` at S. Every step is a MERGE, so re-runs are safe.
+A package's maintainers and provenance come from its newest version in the graph. That version
+approximates the version that was `latest` at S. Every step uses MERGE, so it is safe to run again.
 
     uv run python -m ingest.load_graph [--reset] [--only-npm]
 """
@@ -69,13 +69,13 @@ def main() -> None:
 
     g = graph()
     if args.reset:
-        with contextlib.suppress(Exception):  # graph did not exist yet
+        with contextlib.suppress(Exception):  # the graph does not exist yet
             g.delete()
         g = graph()
     for stmt in statements("schema_indexes"):
         try:
             g.query(stmt)
-        except Exception as e:  # index already exists on re-runs
+        except Exception as e:  # the index exists from an earlier run
             if "already indexed" not in str(e):
                 raise
 

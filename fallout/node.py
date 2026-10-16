@@ -1,6 +1,7 @@
 """JSONL bridge to the Node workers (resolver.mjs, semver-eval.mjs).
 
-One Node process per batch, not per item: send thousands of lines, read the same number back.
+There is one Node process per batch, not per item. Python sends many lines and reads the same
+number of lines back.
 """
 
 from __future__ import annotations

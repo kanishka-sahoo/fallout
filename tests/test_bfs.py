@@ -1,5 +1,5 @@
-"""BUILD.md §14: BFS over a hand-built fixture graph with a golden exposed set, hops, paths and
-repo statuses. Runs against a throwaway graph in FalkorDB; skipped when FalkorDB is down.
+"""Runs the BFS over a hand-built fixture graph and compares the exposed set, hops, paths and repo
+statuses with golden values. Uses a temporary graph in FalkorDB. Skips if FalkorDB is not reachable.
 
     debug@4.4.2 (MAL)  <-CRT ^4.3.0-  a  <- c <- d <- e <- r1 (no lockfile)
                        <-CRT ^4.3.0-  r3 (direct; global override to 4.4.1)
@@ -81,7 +81,7 @@ def g() -> Iterator[Graph]:
         g.query("RETURN 1")
     except Exception:
         pytest.skip("FalkorDB not reachable")
-    with contextlib.suppress(Exception):  # left over from an interrupted run
+    with contextlib.suppress(Exception):  # remains from an interrupted run
         g.delete()
     g.query(FIXTURE)
     yield g

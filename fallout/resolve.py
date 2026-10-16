@@ -1,8 +1,9 @@
-"""Resolve `(name, range)` at S outside the crawl (BUILD.md §5.2).
+"""Resolves `(name, range)` at S outside the crawl.
 
-The crawl already resolved every repo direct dependency and override spec, so those come from
-data/raw/crawl/resolutions.jsonl. Anything new (e.g. a fix plan's override) goes through the
-same packument synthesis and resolver.mjs, with HTTP served from the crawl's cache.
+The crawl already resolved every direct dependency and override spec of the repos. Those
+results come from data/raw/crawl/resolutions.jsonl. A new pair (for example, a fix plan's
+override) goes through the same packument construction and resolver.mjs. HTTP responses come
+from the crawl's cache.
 """
 
 from __future__ import annotations
@@ -28,8 +29,9 @@ def crawl_resolutions() -> dict[tuple[str, str], str | None]:
 
 
 async def packuments(names: set[str], before: str | None = None) -> dict[str, dict[str, Any] | None]:
-    """Packuments as they stood at `before` (default S), built exactly as the crawl builds them."""
-    from ingest.crawl import Crawl, epoch_ms  # ingest depends on fallout, not the reverse
+    """Returns the packuments as they were at `before` (default S), built in the same way as in the crawl."""
+    # ingest imports fallout, so fallout imports ingest only inside functions
+    from ingest.crawl import Crawl, epoch_ms
     from ingest.http import CachedClient
 
     before = before or load_anchor()["S"]
@@ -40,7 +42,7 @@ async def packuments(names: set[str], before: str | None = None) -> dict[str, di
 
 
 def resolve_at_s(pairs: set[tuple[str, str]]) -> dict[tuple[str, str], str | None]:
-    """{(name, range): version at S, or None on ETARGET / unknown package}."""
+    """Returns {(name, range): version at S}. The version is None for ETARGET or an unknown package."""
     known = crawl_resolutions()
     out = {p: known[p] for p in pairs if p in known}
     missing = pairs - out.keys()

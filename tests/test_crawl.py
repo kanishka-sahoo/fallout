@@ -1,4 +1,4 @@
-"""Crawl logic that runs without the network: spec classification and the spam prune."""
+"""Tests the crawl logic that does not need the network: spec classification and spam pruning."""
 
 from ingest.crawl import NON_REGISTRY, NPM_ALIAS, Crawl
 

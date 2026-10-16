@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Authoritative npm semver evaluation (BUILD.md §7.2).
+// Evaluates ranges with npm's own semver package, so the results match npm.
 //
 // Usage: node semver-eval.mjs < requests.jsonl > results.jsonl
 //
@@ -8,7 +8,7 @@
 //   {"id", "op": "satisfies", "range", "version"}              -> {"id", "result": true | false}
 //   {"id", "op": "filter", "range", "versions": [...]}         -> {"id", "result": [...matching]}
 // A spec that is not a registry semver range (npm: alias, git, tarball, file:, dist-tag)
-// yields {"id", "result": "unknown", "reason"}. It is reported, never silently dropped.
+// gives {"id", "result": "unknown", "reason"}. The caller gets this result; the spec is not dropped.
 
 import { createInterface } from 'node:readline'
 import semver from 'semver'

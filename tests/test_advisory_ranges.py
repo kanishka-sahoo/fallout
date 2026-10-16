@@ -1,5 +1,5 @@
-"""OSV range events -> npm semver ranges (DECISIONS D17), and package-spec parsing for
-exposure_path package targets (D18)."""
+"""Tests the conversion of OSV range events to npm semver ranges (DECISIONS D17). Also tests the
+package-spec parsing for exposure_path package targets (D18)."""
 
 import pytest
 

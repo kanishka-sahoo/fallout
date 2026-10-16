@@ -1,13 +1,14 @@
-"""The LLM-visible tools (BUILD.md §6.2), as plain functions over FalkorDB.
+"""The tools that the LLM can call, as plain functions over FalkorDB.
 
-mcp_server/server.py exposes them over MCP; the eval and the tests call them directly. Every
-tool returns the §6.1 envelope:
+mcp_server/server.py makes them available over MCP. The eval and the tests call them directly.
+Every tool returns this envelope:
 
     {"result": ..., "paths": [{id, nodes[], edges[{type, requirement}]}],
      "cypher": [query names under graph/queries/], "timing_ms": int, "summary": {k: v}}
 
-`summary` holds the few numbers the event log prints (`tool=blast_radius hops=10 ...`).
-No tool here touches GitHub or can apply a fix: that path is api/approval.py -> api/fix_executor.py.
+`summary` holds the values that the event log prints (`tool=blast_radius hops=10 ...`).
+No tool in this module uses GitHub or can apply a fix. Fixes go through api/approval.py and
+api/fix_executor.py only.
 """
 
 from __future__ import annotations
@@ -62,7 +63,7 @@ STATUS_MEANING = {
 
 
 class ToolError(Exception):
-    """A tool-level failure the LLM should see as a message (bad input, missing prerequisite)."""
+    """A tool failure that the LLM gets as a message, for example bad input or a missing prerequisite."""
 
 
 def tool(
@@ -88,7 +89,8 @@ def tool(
 
 
 def repo_key(repo: str) -> str:
-    """`billing-api`, `fallout-demo/billing-api` and `repo:fallout-demo/billing-api` are one repo."""
+    """Normalizes a repo name. `billing-api`, `fallout-demo/billing-api` and
+    `repo:fallout-demo/billing-api` are the same repo."""
     name = repo.strip().removeprefix("repo:")
     if "/" not in name:
         name = f"{SETTINGS['github_org']}/{name}"
@@ -121,7 +123,7 @@ def anchor() -> dict[str, str]:
 
 @tool
 def ingest_advisory(advisory_ids: list[str] | None, incident_id: str, title: str | None = None):
-    """Pull OSV advisories, create the malicious versions, compute CAN_RESOLVE_TO (§7.1–7.2)."""
+    """Gets OSV advisories, creates the malicious versions and computes CAN_RESOLVE_TO edges."""
     if not advisory_ids:
         try:
             cfg = load_incident(incident_id)
@@ -144,7 +146,8 @@ def ingest_advisory(advisory_ids: list[str] | None, incident_id: str, title: str
 
 @tool
 def blast_radius(incident_id: str, max_hops: int = 16):
-    """Hop-by-hop reverse BFS from the affected versions; persists EXPOSES and repo statuses."""
+    """Runs a reverse BFS, one hop at a time, from the affected versions.
+    Stores the EXPOSES edges and the repo statuses."""
     g = graph()
     require_incident(g, incident_id, need_blast=False)
     res = _blast(incident_id, max_hops, g=g)
@@ -223,8 +226,9 @@ def package_exposure(g: Any, incident_id: str, package: str, affected: Affected)
 
 @tool
 def exposure_path(incident_id: str, repo: str | None = None, package: str | None = None):
-    """The chain target -> ... -> affected version, with the requirement on every hop (§7.4).
-    The target is a repo, or a package (`name` = its version at S, or `name@version`)."""
+    """Returns the path from the target to an affected version, with the requirement on every hop.
+    The target is a repo or a package. For a package, `name` means its version at S.
+    `name@version` is also valid."""
     if bool(repo) == bool(package):
         raise ToolError("give exactly one of repo or package")
     if package:
@@ -287,7 +291,7 @@ def exposure_path(incident_id: str, repo: str | None = None, package: str | None
 
 @tool
 def repo_status(incident_id: str, repo: str | None = None):
-    """Lockfile- and override-aware status of one repo, or of every repo (§7.5)."""
+    """Returns the status of one repo or of every repo. The status uses the lockfile and the overrides."""
     g = graph()
     require_incident(g, incident_id)
     affected = Affected.load(g, incident_id)
@@ -318,7 +322,7 @@ def repo_status(incident_id: str, repo: str | None = None):
 
 @tool
 def critical_packages(k: int = 10, algorithm: str = "pagerank"):
-    """Ecosystem chokepoints by stored algo.pageRank / algo.betweenness scores (§7.6)."""
+    """Returns the critical packages by the stored algo.pageRank or algo.betweenness scores."""
     if algorithm not in ("pagerank", "betweenness"):
         raise ToolError("algorithm must be 'pagerank' or 'betweenness'")
     g = graph()
@@ -337,7 +341,7 @@ def critical_packages(k: int = 10, algorithm: str = "pagerank"):
 
 @tool
 def maintainer_reach(k: int = 10):
-    """npm accounts whose takeover would reach the most packages and downloads (§7.7)."""
+    """Returns the npm accounts whose takeover would reach the most packages and downloads."""
     g = graph()
     k = max(1, min(int(k), 100))
     top = rows(g, "maintainer_reach_top", {"k": k})
@@ -368,7 +372,7 @@ def checkout_dir(full_name: str) -> Path:
 
 @tool
 def plan_fix(repo: str, incident_id: str):
-    """Minimal override plan for one repo, stored as a pending Plan (§6.3 step 1)."""
+    """Makes a minimal override plan for one repo and stores it as a PENDING Plan."""
     g = graph()
     require_incident(g, incident_id)
     key = known_repo(g, repo)
@@ -404,7 +408,8 @@ def plan_fix(repo: str, incident_id: str):
 
 @tool
 def request_fix_approval(plan_id: str):
-    """Mark a plan AWAITING_APPROVAL; the console shows the approval card. Cannot apply it."""
+    """Sets a plan to AWAITING_APPROVAL, and the console shows the approval card.
+    This tool cannot apply the plan."""
     g = graph()
     plan = fixplan.load(g, plan_id)
     if plan is None:
@@ -428,8 +433,8 @@ def request_fix_approval(plan_id: str):
 
 
 def fetch_ref(full_name: str, ref: str) -> tuple[Path, str]:
-    """Export `ref` of a public demo repo into a temp dir (no token: the demo repos are public,
-    and this tool is LLM-visible). Returns (dir, commit sha)."""
+    """Exports `ref` of a public demo repo into a temporary directory. It uses no token, because the
+    demo repos are public and the LLM can call this tool. Returns (dir, commit sha)."""
     src = checkout_dir(full_name)
     subprocess.run(["git", "-C", str(src), "fetch", "-q", "origin", ref], check=True, timeout=60)
     sha = subprocess.run(
@@ -452,8 +457,8 @@ def snapshot_status(g: Any, incident: str, key: str) -> dict[str, Any]:
 
 @tool
 def recheck_repo(repo: str, incident_id: str, branch: str | None = None):
-    """Re-parse a repo (or a PR branch), replace LOCKS/OVERRIDES, recompute its status and
-    return the before/after diff."""
+    """Parses a repo (or a PR branch) again, replaces its LOCKS and OVERRIDES edges, recomputes
+    its status and returns the status before and after."""
     from ingest.load_repos import load_repo
 
     g = graph()

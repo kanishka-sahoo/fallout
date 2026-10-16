@@ -1,9 +1,9 @@
-"""Open a fix PR through the GitHub REST API (BUILD.md §6.3 step 4).
+"""Opens a fix PR through the GitHub REST API.
 
-Git data API only (blobs -> tree -> commit -> ref -> pull), so the token never touches a git
-checkout or `.git/config`. The token is a fine-grained PAT scoped to the demo org (contents +
-pull requests) and is read from FALLOUT_GH_TOKEN by the API process only; the MCP server
-and the sandbox never receive it.
+This module uses only the Git Data API (blob, tree, commit, ref, pull request). The token is
+never written to a git checkout or to `.git/config`. The token is a fine-grained personal access
+token for the demo org, with the "contents" and "pull requests" permissions. Only the API process
+reads it, from FALLOUT_GH_TOKEN. The MCP server and the sandbox do not get the token.
 """
 
 from __future__ import annotations

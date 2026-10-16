@@ -1,12 +1,12 @@
-"""Grade one answer against the oracle (BUILD.md §8 metrics). Never reads FalkorDB.
+"""Grades one answer against the oracle. This module does not read FalkorDB.
 
-- A cited node `name@version` is hallucinated unless it is in the target's oracle tree, is an
-  affected version of the unit, or exists in the registry (packument cache).
-- A cited edge (consecutive hops, starting from the target root) is hallucinated unless the
-  oracle tree has it. The last hop into an affected version counts when the parent has an
-  edge to that package whose spec admits the version (malicious units) or when that affected
-  version is what npm installed there (vulnerable units).
-- A path is valid when it is non-empty, every edge exists, and it ends at an affected version.
+- A cited node `name@version` is hallucinated if it is not in the target's oracle tree, is not
+  an affected version of the advisory group, and is not in the registry (packument cache).
+- A cited edge (two consecutive hops, from the target root) is hallucinated if the oracle tree
+  does not have it. The last hop to an affected version is valid in two cases. For malicious
+  advisory groups, the parent has an edge to that package whose spec admits the version. For
+  vulnerable advisory groups, npm installed that affected version there.
+- A path is valid if it is not empty, every edge exists, and it ends at an affected version.
 """
 
 from __future__ import annotations
@@ -39,14 +39,14 @@ class Tree:
         self.nodes = {
             f"{n['package']}@{n['version']}" for n in nodes if not n.get("root") and n.get("version")
         }
-        self.edges: dict[str, list[dict[str, Any]]] = defaultdict(list)  # "pkg@ver" | ROOT -> edges
+        self.edges: dict[str, list[dict[str, Any]]] = defaultdict(list)  # "pkg@ver" or ROOT -> edges
         for n in nodes:
             src = "ROOT" if n.get("root") else f"{n['package']}@{n['version']}"
             for e in n["edgesOut"]:
                 if e.get("type") == "dev" and not n.get("root") and not n.get("workspace"):
                     continue
                 self.edges[src].append(e)
-            if n.get("workspace") and not n.get("root"):  # workspace links hang off the root
+            if n.get("workspace") and not n.get("root"):  # workspace links are edges from the root
                 self.edges["ROOT"].extend(n["edgesOut"])
 
     def has_edge(self, src: str, pkg: str, version: str, last_mode: str | None) -> bool:
@@ -81,7 +81,7 @@ class Grader:
         if name not in self._registry:
             from fallout.resolve import packuments
 
-            # A worker thread: the grader is also called from inside System C's event loop.
+            # Use a worker thread, because System C also calls the grader from inside its event loop.
             with ThreadPoolExecutor(1) as ex:
                 doc = ex.submit(asyncio.run, packuments({name})).result().get(name) or {}
             self._registry[name] = set(doc.get("versions", {}))
@@ -118,7 +118,7 @@ class Grader:
         }
 
     def path_cause(self, unit: str, target: str, grade: dict[str, Any]) -> str:
-        """Why an exposed answer's path is not one npm would install."""
+        """Explains why the path in an exposed answer is not a path that npm would install."""
         tree = self.tree(target)
         for e in grade["bad_edges"]:
             src, dst = e.split(" -> ")
@@ -138,7 +138,7 @@ class Grader:
         return "path does not end at an affected version"
 
     def cause(self, unit: str, target: str, pred: bool | None, path: list[str] | None = None) -> str:
-        """A first guess at why the graph disagrees with npm, for the README's error analysis."""
+        """Gives a probable reason why the graph disagrees with npm, for the error analysis in the README."""
         gold = self.oracle[(unit, target)]
         if pred is None:
             return "no answer"

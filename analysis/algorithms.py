@@ -1,12 +1,13 @@
-"""Ecosystem algorithms (BUILD.md §5.5 step 8, §7.6, §7.7): PageRank and betweenness over the
-PKG_DEPENDS_ON projection, then maintainer reach. All written back as node properties so the
-MCP tools only read them.
+"""Ecosystem algorithms. Runs PageRank and betweenness over the PKG_DEPENDS_ON projection,
+then computes maintainer reach. The results are stored as node properties, so the MCP tools
+only read them.
 
-Maintainer reach: take the top `--maintainers` accounts by summed PageRank over the packages
-they maintain, and reverse-BFS PKG_DEPENDS_ON from all of them at once. `reach_packages` counts
-every package the takeover reaches, the maintainer's own packages included; `reach_downloads`
-sums their weekly downloads. The BFS runs in memory over the 80k-edge projection: one graph
-read instead of 300 frontier walks.
+Maintainer reach: take the top `--maintainers` accounts by the sum of PageRank over the
+packages they maintain. For each account, run a reverse BFS over PKG_DEPENDS_ON from all of
+its packages at once. `reach_packages` counts every package that a takeover reaches, including
+the maintainer's own packages. `reach_downloads` is the sum of their weekly downloads. The BFS
+runs in memory over the 80k-edge projection. This needs one graph read instead of 300
+traversals in the database.
 
     uv run python -m analysis.algorithms [--skip-reach] [--maintainers 300]
 """
@@ -25,7 +26,7 @@ from fallout.db import batches, graph, query, rows
 
 
 def reverse_reach(start: Iterable[str], dependents: dict[str, list[str]]) -> set[str]:
-    """Every package that transitively depends on any of `start`, plus `start` itself."""
+    """Returns every package that transitively depends on any package in `start`, and `start` itself."""
     seen = set(start)
     queue = deque(seen)
     while queue:

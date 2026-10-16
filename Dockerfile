@@ -1,4 +1,5 @@
-# Fallout API: FastAPI + agent + MCP server (child process) + fix executor, serving the built console.
+# Fallout API image: FastAPI, the agent, the MCP server (as a child process) and the fix executor.
+# It also serves the built console.
 FROM node:22-bookworm-slim AS web
 WORKDIR /web
 COPY web/package.json web/package-lock.json ./

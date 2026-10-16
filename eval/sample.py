@@ -1,7 +1,8 @@
-"""Stratified sample of (unit, target) pairs (BUILD.md §8 "Sampling").
+"""Takes a stratified sample of (advisory group, target) pairs.
 
-~300 pairs, positives (by oracle label) over-sampled to ~40%, every unit represented, and
-every demo repo paired with the replay unit. Fixed seed. Writes eval/sample.json.
+The sample has about 300 pairs. Positive pairs (by oracle label) are over-sampled to about 40%.
+Every advisory group is included, and every demo repo is paired with the replay advisory group.
+The seed is fixed. Writes eval/sample.json.
 
     uv run python -m eval.sample [--n 300] [--pos-share 0.4]
 """
@@ -23,7 +24,7 @@ def stratify(pairs: list[dict], n: int, pos_share: float, seed: int = SEED) -> l
     rng = random.Random(seed)
     key = lambda p: (p["unit"], p["target"])  # noqa: E731
     chosen: dict[tuple[str, str], dict] = {}
-    for p in pairs:  # the replay against every demo repo, always
+    for p in pairs:  # always include the replay against every demo repo
         if p["unit"] == "chalk-debug" and p["target_kind"] == "repo":
             chosen[key(p)] = p
 
@@ -40,7 +41,7 @@ def stratify(pairs: list[dict], n: int, pos_share: float, seed: int = SEED) -> l
             for p in rng.sample(pool, min(quota, len(pool))):
                 chosen[key(p)] = p
 
-    # Top up to n from the remaining pairs, keeping the positive share where positives allow.
+    # Add remaining pairs until there are n. Keep the positive share while positive pairs remain.
     rest: dict[bool, list[dict]] = {True: [], False: []}
     for p in sorted(pairs, key=key):
         if key(p) not in chosen:

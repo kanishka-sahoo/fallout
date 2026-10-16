@@ -1,5 +1,5 @@
-"""Structured agent/API events (BUILD.md §6.1): one dict per event, fanned out to WebSocket
-subscribers and printed to stdout in container-log style:
+"""Structured events from the agent and the API. Each event is one dict. The bus sends it to
+all WebSocket subscribers and prints it to stdout in container-log format:
 
     2026-10-17T14:02:11.482Z fallout-agent  INFO  tool=blast_radius incident=... took_ms=441
 """
@@ -32,8 +32,8 @@ def log_line(event: dict[str, Any]) -> str:
 
 
 class EventBus:
-    """In-process pub/sub. Keeps the last `history` events so a console that connects late
-    can replay the run."""
+    """In-process publish/subscribe. Keeps the last `history` events, so a console that
+    connects late can replay the run."""
 
     def __init__(self, history: int = 2000, echo: bool = True) -> None:
         self.subscribers: set[asyncio.Queue[dict[str, Any]]] = set()

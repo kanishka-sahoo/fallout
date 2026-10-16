@@ -1,4 +1,4 @@
-// The persisted blast radius as a parent-pointer tree, for the console's graph (BUILD.md §9).
+// Returns the stored blast radius as a parent-pointer tree. The console draws its graph from it.
 MATCH (i:Incident {id: $incident})-[x:EXPOSES]->(n)
 WHERE x.hop IS NOT NULL
 OPTIONAL MATCH (p:Package)-[:HAS_VERSION]->(n)

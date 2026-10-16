@@ -14,10 +14,10 @@ const SUGGESTIONS = [
   'Why is billing-api affected?',
   'Which repos need action first, and why?',
   'Fix billing-api',
-  'Which packages are the biggest chokepoints?',
+  'Which packages are the most critical?',
 ]
 
-// Inline `code` only; the agent writes short Markdown.
+// Render inline code and bold text only. Agent answers use short Markdown.
 function Body({ text }: { text: string }) {
   const parts = text.split(/(`[^`]+`|\*\*[^*]+\*\*)/g)
   return (
@@ -40,7 +40,7 @@ export function Chat({ messages, pending, onSend, onCite }: ChatProps) {
       <div className="scroll">
         {messages.length === 0 ? (
           <p className="msg" style={{ color: 'var(--slate)' }}>
-            Ask about exposure, paths or fixes. Every answer comes from graph tools and cites the paths they returned.
+            Ask about exposure, dependency paths or fixes. Each answer uses graph tool results and cites the paths that the tools returned.
           </p>
         ) : null}
         {messages.map((m, i) => (
@@ -54,7 +54,7 @@ export function Chat({ messages, pending, onSend, onCite }: ChatProps) {
                       <button
                         key={id}
                         className={m.answer!.unknown_path_ids.includes(id) ? 'unknown' : ''}
-                        title={m.answer!.unknown_path_ids.includes(id) ? 'No tool returned this path' : 'Show this path on the graph'}
+                        title={m.answer!.unknown_path_ids.includes(id) ? 'Unverified. No tool returned this path.' : 'Show this path on the graph'}
                         onClick={() => onCite(m.answer!, id)}
                       >
                         {id}
@@ -63,8 +63,8 @@ export function Chat({ messages, pending, onSend, onCite }: ChatProps) {
                   </div>
                 ) : null}
                 <div className="tools">
-                  {m.answer.tool_calls.map((t) => t.name).join(', ') || 'no tools'} in {(m.answer.took_ms / 1000).toFixed(1)}s
-                  {m.answer.offline ? ', offline planner' : ''}
+                  {m.answer.tool_calls.map((t) => t.name).join(', ') || 'No tools called'} in {(m.answer.took_ms / 1000).toFixed(1)}s
+                  {m.answer.offline ? ' (offline planner)' : ''}
                 </div>
               </>
             ) : null}
@@ -88,7 +88,7 @@ export function Chat({ messages, pending, onSend, onCite }: ChatProps) {
 
 export function Log({ events }: { events: LogEvent[] }) {
   const box = useRef<HTMLDivElement>(null)
-  const stuck = useRef(true) // follow the tail until the reader scrolls up
+  const stuck = useRef(true) // Follow new events until the user scrolls up
   useEffect(() => {
     const el = box.current
     if (el && stuck.current) el.scrollTop = el.scrollHeight
@@ -104,7 +104,7 @@ export function Log({ events }: { events: LogEvent[] }) {
         stuck.current = el.scrollHeight - el.scrollTop - el.clientHeight < 40
       }}
     >
-      {events.length === 0 ? <div>waiting for events…</div> : null}
+      {events.length === 0 ? <div>Waiting for events…</div> : null}
       {events.map((e, i) => (
         <div key={i} className={`${e.level} ${e.source === 'fallout-api' ? 'src-api' : ''}`}>{e.line}</div>
       ))}

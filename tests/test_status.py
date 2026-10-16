@@ -1,4 +1,4 @@
-"""BUILD.md §14 status machine: one case per status, the override transition, and a scoped
+"""Repo status tests. Covers one case per status, the transition after an override, and a nested
 override that does not cover every path."""
 
 import pytest
@@ -15,8 +15,7 @@ from fallout.blast import (
     override_covers,
 )
 
-# eslint@9 and mocha@10 each depend on debug (they are its dependents); parse-json sits two
-# hops down, under cosmiconfig.
+# eslint@9 and mocha@10 each depend on debug. parse-json is two hops down, under cosmiconfig.
 ADJ = {
     "repo": ["eslint@9", "cosmiconfig@9", "mocha@10"],
     "cosmiconfig@9": ["parse-json@5"],
@@ -55,7 +54,7 @@ def test_range_admits_lock_safe_to_mitigated_by_override() -> None:
         == RANGE_ADMITS_LOCK_SAFE
     )
 
-    fix = [OverrideEntry("debug", None, "4.4.1")]  # global override, applied by the fix PR
+    fix = [OverrideEntry("debug", None, "4.4.1")]  # global override that the fix PR adds
     assert override_covers("repo", ADJ, NAMES, DEBUG_DEPENDENTS, fix, BAD_DEBUG)
     status = decide_status(
         exposed=True, has_lockfile=True, locked_affected=[], reachable={"debug"}, covered={"debug"}

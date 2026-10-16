@@ -12,7 +12,7 @@ import { INK, SAFE, hopColor } from './hop'
 type Tab = 'repos' | 'ecosystem' | 'metrics'
 const HOP_MS = 650
 
-// One approval card per repo: the newest pending plan replaces older ones.
+// Show one approval card per repo. The newest pending plan replaces older plans.
 const latestPerRepo = (plans: Plan[]) => {
   const seen = new Map<string, Plan>()
   for (const p of [...plans].sort((a, b) => b.created_at - a.created_at)) if (!seen.has(p.repo)) seen.set(p.repo, p)
@@ -31,7 +31,7 @@ export default function App() {
   const [busy, setBusy] = useState<string | null>(null)
   const [repos, setRepos] = useState<RepoStatus[]>([])
   const [plans, setPlans] = useState<Plan[]>([])
-  // Cards the user approved stay up after the plan leaves AWAITING_APPROVAL, to show the outcome.
+  // Keep approved cards visible after the plan leaves AWAITING_APPROVAL, to show the result.
   const [kept, setKept] = useState<Plan[]>([])
   const [tab, setTab] = useState<Tab>('repos')
   const [sel, setSel] = useState<Selection | null>(null)
@@ -95,7 +95,7 @@ export default function App() {
     setSel(null)
     setCited(null)
     setReveal(0)
-    setBusy('Ingesting advisories from OSV and walking the graph…')
+    setBusy('Loading advisories from OSV and computing the blast radius…')
     try {
       await api.replay(incident)
       const g = await api.graph(incident)
@@ -177,10 +177,10 @@ export default function App() {
           <select value={incident} onChange={(e) => { setIncident(e.target.value); loadIncident(e.target.value) }} aria-label="Incident">
             {incidents.map((i) => <option key={i.id} value={i.id}>{i.title || i.id}</option>)}
           </select>
-          <span className="anchor">npm as it stood at {anchor ? fmtUtc(anchor) : '…'}, one second before the first malicious publish</span>
+          <span className="anchor">Snapshot time (S): {anchor ? fmtUtc(anchor) : '…'}. This is 1 second before the first malicious release.</span>
         </div>
         <span className="spacer" />
-        <span className="conn" data-open={open}>{open ? 'live' : 'reconnecting'}</span>
+        <span className="conn" data-open={open}>{open ? 'Connected' : 'Reconnecting…'}</span>
         <button className="btn" onClick={replay} disabled={!!busy || (reveal < maxHop && reveal > 0)}>
           {busy ? 'Replaying…' : 'Replay incident'}
         </button>
@@ -193,16 +193,16 @@ export default function App() {
           {data ? (
             <BlastGraph data={data} reveal={reveal} path={highlight} selected={sel?.key ?? null} onSelect={selectNode} />
           ) : (
-            <div className="empty">This incident has not been ingested yet. Replay it to pull the advisories and compute the blast radius.</div>
+            <div className="empty">No data for this incident. Select Replay incident to load the advisories and compute the blast radius.</div>
           )}
           <div />
           {sel ? <Inspector sel={sel} pathId={pathId} onPath={(id) => { setCited(null); setPathId(id) }} onClose={() => { setSel(null); setCited(null) }} /> : null}
           <div className="legend" aria-hidden>
-            <span><i style={{ background: hopColor(0, maxHop) }} />malicious</span>
-            <span><i style={{ background: hopColor(Math.ceil(maxHop / 3), maxHop) }} />near</span>
-            <span><i style={{ background: hopColor(maxHop, maxHop) }} />far</span>
-            <span><i style={{ background: INK }} />your repo</span>
-            <span><i style={{ background: SAFE }} />mitigated</span>
+            <span><i style={{ background: hopColor(0, maxHop) }} />Malicious version</span>
+            <span><i style={{ background: hopColor(Math.ceil(maxHop / 3), maxHop) }} />Near</span>
+            <span><i style={{ background: hopColor(maxHop, maxHop) }} />Far</span>
+            <span><i style={{ background: INK }} />Your repo</span>
+            <span><i style={{ background: SAFE }} />Mitigated repo</span>
           </div>
         </div>
 
@@ -210,7 +210,7 @@ export default function App() {
           <div className="tabs" role="tablist">
             {(['repos', 'ecosystem', 'metrics'] as Tab[]).map((t) => (
               <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)}>
-                {t === 'repos' ? 'Repos' : t === 'ecosystem' ? 'Ecosystem' : 'Eval'}
+                {t === 'repos' ? 'Repos' : t === 'ecosystem' ? 'Ecosystem' : 'Evaluation'}
               </button>
             ))}
           </div>

@@ -1,4 +1,4 @@
-// The one colour scale in the console: hops away from a malicious version, hot to cold.
+// Colour scale for hop distance from a malicious version. Red is near. Grey-blue is far.
 const STOPS: [number, [number, number, number]][] = [
   [0, [0xc2, 0x1e, 0x3a]],
   [0.3, [0xe3, 0x9b, 0x2d]],

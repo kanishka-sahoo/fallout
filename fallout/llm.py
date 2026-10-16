@@ -1,9 +1,9 @@
 """One LLM interface for the agent (api/agent.py) and the eval systems (eval/run.py).
 
-`OpenAILLM` talks to the Responses API with the model in config/model.json. `OfflineLLM` is a
-keyword-routed scripted planner that drives the same tools with no model at all. It exists so
-the demo and the plumbing run headless before OPENAI_API_KEY is set; every answer it writes
-is labelled as offline, and the eval refuses to use it.
+`OpenAILLM` calls the OpenAI Responses API with the model in config/model.json. `OfflineLLM` is a
+scripted planner. It selects tools by keyword and calls the same tools, with no model. It lets
+the demo and the integration run without OPENAI_API_KEY. Every answer it writes has an offline
+label, and the eval does not accept it.
 """
 
 from __future__ import annotations
@@ -61,7 +61,7 @@ class Turn:
 
 @dataclass
 class Conversation:
-    """Provider state between turns: the previous response id (OpenAI) or the transcript."""
+    """Provider state between turns. OpenAI uses the previous response id. OfflineLLM uses the transcript."""
 
     previous_response_id: str | None = None
     transcript: list[dict[str, Any]] = field(default_factory=list)
@@ -188,7 +188,7 @@ def _render(name: str, env: dict[str, Any]) -> str:
 
 
 class OfflineLLM:
-    """Routes a message to a fixed tool sequence by keyword, then renders the results."""
+    """Selects a fixed tool sequence from keywords in the message, then formats the results."""
 
     name = "offline"
     offline = True

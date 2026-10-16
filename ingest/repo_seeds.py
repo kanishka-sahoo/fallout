@@ -1,7 +1,8 @@
-"""Clone the demo org and turn every manifest into crawl seeds (BUILD.md §5.5 step 2).
+"""Clones the demo org repos and converts every manifest into crawl seeds.
 
-Runs before the crawl so no repo direct dependency is left uncrawled. Reads the root and
-workspace package.json files: dependencies, devDependencies and overrides specs.
+Run this before the crawl, so that the crawl includes every direct dependency of the repos.
+It reads the root and workspace package.json files: dependencies, devDependencies and
+override specs.
 
     uv run python -m ingest.repo_seeds
 """
@@ -24,7 +25,7 @@ REPO_SEEDS_PATH = RAW_DIR / "repo_seeds.json"
 
 
 def git_auth_args() -> list[str]:
-    """Pass the token as a one-off header so it is never written to .git/config."""
+    """Sends the token as a per-command header, so git does not write it to .git/config."""
     load_dotenv(ROOT / ".env")
     token = os.environ["FALLOUT_GH_TOKEN"]
     basic = base64.b64encode(f"x-access-token:{token}".encode()).decode()
@@ -45,7 +46,7 @@ def sync_repo(full_name: str) -> Path:
 def repo_seed_pairs(repo_dir: Path) -> list[dict[str, str]]:
     paths = manifests(repo_dir)
     docs = [json.loads(p.read_text()) for p in paths]
-    internal = {d.get("name") for d in docs}  # workspace packages are not registry deps
+    internal = {d.get("name") for d in docs}  # workspace packages are not registry dependencies
     pairs = []
     for d in docs:
         for field, scope in (("dependencies", "prod"), ("devDependencies", "dev")):

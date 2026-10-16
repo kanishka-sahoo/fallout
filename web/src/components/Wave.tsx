@@ -21,12 +21,12 @@ export function Wave({ data, reveal, busy }: Props) {
   ).size
 
   return (
-    <section className="wave" aria-label="Blast wave by hop">
+    <section className="wave" aria-label="Blast radius by hop">
       <div className="tally" aria-live="polite">
-        <div><b>{data?.affected.length ?? 0}</b><span>malicious versions</span></div>
-        <div><b>{versions.toLocaleString()}</b><span>versions exposed</span></div>
-        <div><b>{packages.toLocaleString()}</b><span>packages</span></div>
-        <div><b>{repos}</b><span>of your repos</span></div>
+        <div><b>{data?.affected.length ?? 0}</b><span>Malicious versions</span></div>
+        <div><b>{versions.toLocaleString()}</b><span>Exposed versions</span></div>
+        <div><b>{packages.toLocaleString()}</b><span>Exposed packages</span></div>
+        <div><b>{repos}</b><span>Your repos exposed</span></div>
       </div>
       <div className="bands">
         {busy && !data?.nodes.length ? <span className="lbl">{busy}</span> : null}
@@ -39,7 +39,7 @@ export function Wave({ data, reveal, busy }: Props) {
               <b className="count">{h.versions.toLocaleString()}</b>
               <div className="bar" style={{ height, background: hopColor(hop, maxHop) }} />
               <div className="lbl">
-                <span>hop {hop}</span>
+                <span>Hop {hop}</span>
                 {h.repos ? <span className="repos">+{h.repos} repo{h.repos > 1 ? 's' : ''}</span> : null}
               </div>
             </div>

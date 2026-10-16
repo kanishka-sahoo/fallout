@@ -1,4 +1,4 @@
-// BUILD.md §7.5. OPTIONAL MATCH + collect yields {key: null} when nothing matches; Python drops it.
+// Returns the repo's locked versions. With no match, OPTIONAL MATCH and collect give {key: null}. Python drops that row.
 MATCH (r:Repo {key: $repo})
 OPTIONAL MATCH (r)-[l:LOCKS]->(v:Version)
 WHERE v.name IN $affected_packages

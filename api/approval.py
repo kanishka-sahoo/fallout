@@ -1,8 +1,9 @@
-"""Approval tokens (BUILD.md §6.3).
+"""Approval tokens.
 
-`POST /plans/{plan_id}/approve` (console session only) mints
-`token = HMAC_SHA256(secret, plan_id | repo | expiry)`, valid for 10 minutes and usable once.
-The API hands it straight to the fix executor; the LLM never sees, mints or forwards one.
+`POST /plans/{plan_id}/approve` (console session only) issues
+`token = HMAC_SHA256(secret, plan_id | repo | expiry)`. A token is valid for 10 minutes and
+works once. The API gives the token directly to the fix executor. The LLM does not see, issue
+or pass on a token.
 """
 
 from __future__ import annotations
@@ -23,7 +24,8 @@ def _secret() -> bytes:
     return s.encode() if s else _PROCESS_SECRET
 
 
-_PROCESS_SECRET = secrets.token_bytes(32)  # tokens die with the process unless a secret is set
+# Without FALLOUT_APPROVAL_SECRET, tokens become invalid when the process stops.
+_PROCESS_SECRET = secrets.token_bytes(32)
 
 
 class ApprovalError(Exception):
@@ -52,7 +54,7 @@ def mint(plan_id: str, repo: str, now: float | None = None) -> str:
 
 
 class UsedTokens:
-    """Single-use enforcement. In memory: a restart also rotates the default secret."""
+    """Makes each token single-use. The set is in memory. A restart also replaces the default secret."""
 
     def __init__(self) -> None:
         self._used: set[str] = set()
@@ -72,14 +74,14 @@ used_tokens = UsedTokens()
 def verify(
     token: str, plan_id: str, repo: str, now: float | None = None, used: UsedTokens = used_tokens
 ) -> None:
-    """Raise ApprovalError unless `token` is a fresh, unused signature over (plan_id, repo)."""
+    """Raises ApprovalError if `token` is not a valid, unexpired, unused signature over (plan_id, repo)."""
     try:
         exp_s, sig = token.split(".", 1)
         expiry = int(exp_s)
     except ValueError as e:
         raise ApprovalError("malformed token") from e
     if not hmac.compare_digest(sig, _sign(plan_id, repo, expiry)):
-        raise ApprovalError("bad signature (forged, or for another plan/repo)")
+        raise ApprovalError("bad signature (forged, or issued for a different plan or repo)")
     if (now or time.time()) > expiry:
         raise ApprovalError("token expired")
     if not used.consume(sig):

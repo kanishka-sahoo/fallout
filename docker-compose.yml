@@ -1,9 +1,9 @@
-# The whole stack from a snapshot, no crawl (BUILD.md §15):
-#   scripts/snapshot.sh            on the machine that has the graph (writes data/snapshots/)
-#   docker compose build sandbox   the token-free lockfile sandbox image
-#   docker compose up -d           seed -> falkordb -> api (console on :8000)
+# Runs the full stack from a snapshot, without a crawl:
+#   scripts/snapshot.sh            run on the machine that has the graph (writes data/snapshots/)
+#   docker compose build sandbox   builds the lockfile sandbox image (it has no tokens)
+#   docker compose up -d           starts seed, then falkordb, then api (console on :8000)
 services:
-  # Copies data/snapshots/dump.rdb into an empty FalkorDB volume on first start, then exits.
+  # On first start, copies data/snapshots/dump.rdb into the empty FalkorDB volume, then exits.
   seed:
     image: alpine:3.20
     volumes:
@@ -22,9 +22,9 @@ services:
       - "127.0.0.1:${FALKORDB_PORT:-6380}:6379"
       - "127.0.0.1:${FALKORDB_BROWSER_PORT:-3001}:3000"
     environment:
-      # The image defaults cap result sets at 10k rows and kill queries after 1 s; both
-      # silently truncate the blast radius on a 33k-version graph.
-      # (Plain `TIMEOUT` together with TIMEOUT_MAX makes FalkorDB 4.22 abort on load.)
+      # The image defaults limit result sets to 10k rows and stop queries after 1 s. On a
+      # 33k-version graph, both limits cut the blast radius short without an error.
+      # Do not also set `TIMEOUT`: with TIMEOUT_MAX, it makes FalkorDB 4.22 stop during load.
       FALKORDB_ARGS: "MAX_QUEUED_QUERIES 25 TIMEOUT_MAX 0 TIMEOUT_DEFAULT 0 RESULTSET_SIZE -1"
     volumes:
       - falkordb_data:/var/lib/falkordb/data
@@ -39,7 +39,12 @@ services:
     depends_on:
       falkordb: { condition: service_healthy }
     env_file: .env  # OPENAI_API_KEY, FALLOUT_GH_TOKEN, FALLOUT_CONSOLE_KEY, FALLOUT_APPROVAL_SECRET
+    # Run as the host user so that files written to ./data are not owned by root.
+    # The docker group gives access to the Docker socket (find its GID with `getent group docker`).
+    user: "${FALLOUT_UID:-1000}:${FALLOUT_GID:-1000}"
+    group_add: ["${DOCKER_GID:-986}"]
     environment:
+      HOME: /tmp
       FALKORDB_HOST: falkordb
       FALKORDB_PORT: "6379"
       FALLOUT_SANDBOX_TMP: ${PWD}/data/tmp
@@ -47,13 +52,13 @@ services:
       - "${FALLOUT_API_BIND:-127.0.0.1}:${FALLOUT_API_PORT:-8000}:8000"
     volumes:
       - ./data:/app/data
-      # The sandbox runs on the host daemon, so its work dir must exist at the same path on both sides.
+      # The sandbox runs on the host's Docker daemon, so its work directory must have the same path in the container and on the host.
       - ${PWD}/data/tmp:${PWD}/data/tmp
-      # Only the fix executor uses this, to start the sandbox container (api/fix_executor.py).
+      # Only the fix executor (api/fix_executor.py) uses this, to start the sandbox container.
       - /var/run/docker.sock:/var/run/docker.sock
     restart: unless-stopped
 
-  # Built once and run per fix by the executor; never started by `up`.
+  # Built once. The fix executor runs it once per fix. `up` does not start it.
   sandbox:
     build: workers/sandbox
     image: fallout-sandbox

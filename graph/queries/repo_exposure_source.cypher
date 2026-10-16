@@ -1,5 +1,5 @@
-// Re-derive one repo's BFS entry after its manifest changed (recheck_repo): hop 1 when the repo
-// itself would resolve to an affected version, else one past its nearest exposed direct dep.
+// Recomputes one repo's BFS entry after its manifest changes (recheck_repo). The hop is 1 if the repo
+// would resolve to an affected version. Otherwise it is one more than its nearest exposed direct dependency.
 MATCH (r:Repo {key: $repo})
 OPTIONAL MATCH (r)-[c:CAN_RESOLVE_TO]->(m:Version)
 WHERE c.incident = $incident

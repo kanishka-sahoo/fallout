@@ -1,8 +1,9 @@
-"""Compute the time anchor S (BUILD.md §5.0) and write config/anchor.json.
+"""Computes the snapshot time S and writes config/anchor.json.
 
-S = earliest registry publish time among the replay incident's malicious versions, minus
-one second. Affected versions come from OSV; publish times from the npm registry `time`
-map, which keeps entries for versions npm later removed. Nothing here is typed by hand.
+S is the earliest registry publish time of the replay incident's malicious versions, minus
+one second. The affected versions come from OSV. The publish times come from the `time` map
+in the npm registry, which keeps entries for versions that npm removed later. No value in
+this file is entered by hand.
 
     uv run python -m ingest.anchor [--incident npm-2025-09-08-chalk-debug]
 """

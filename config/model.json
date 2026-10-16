@@ -5,5 +5,5 @@
   "max_output_tokens": 4000,
   "max_tool_calls_per_turn": 12,
   "price_usd_per_mtok": {"input": 0.1, "cached_input": 0.01, "output": 0.5},
-  "_note": "Fill price_usd_per_mtok from the OpenAI pricing page before the README; cost columns stay empty while it is null."
+  "_note": "price_usd_per_mtok comes from the OpenAI pricing page. If a price is null, the cost columns are empty."
 }

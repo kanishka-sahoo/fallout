@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-// Independent, npm-authoritative exposure oracle (BUILD.md §8). Never reads FalkorDB.
+// Independent exposure oracle that uses npm's own resolver. It does not read FalkorDB.
 //
-// A target is exposed to affected version m of package P when its ideal tree, built by npm's
-// own arborist at S, contains an installed edge into P whose spec admits m (§5.0).
+// A target is exposed to affected version m of package P if its ideal tree, built by npm's
+// arborist at S, has an installed edge to P whose spec admits m.
 //
 // Usage:
 //   node oracle.mjs --before <ISO> --affected affected.json --project <dir>       [--tree-out f]
@@ -11,12 +11,12 @@
 // affected.json: {"debug": ["4.4.2"], "chalk": ["5.6.1"], ...}
 // Prints: {target, exposed, paths: [[{name, version, spec, type}, ...]], unknown_specs, nodes}
 //
-// --units (eval, BUILD.md §8): one tree, labelled for many advisory units at once.
+// --units (eval): builds one tree and labels it for many advisory groups at once.
 // units.json: {"<unit>": {"mode": "admits" | "installed", "affected": {"pkg": ["v", ...]}}}
-//   admits    (malicious, D10): an installed edge into P whose spec admits an affected version
+//   admits    (malicious, D10): an installed edge to P whose spec admits an affected version
 //   installed (vulnerable, D1):  an installed node of P at an affected version
 // Prints: {target, units: {"<unit>": {exposed, paths}}, nodes}. --lock-out writes the
-// package-lock.json arborist would write for this tree (System B's context).
+// package-lock.json that arborist would write for this tree (the context for System B).
 
 import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -28,7 +28,7 @@ function args (argv) {
   const out = {}
   for (let i = 0; i < argv.length; i += 2) out[argv[i].replace(/^--/, '')] = argv[i + 1]
   for (const k of ['before', 'affected']) if (!out[k]) throw new Error(`--${k} is required`)
-  if (!out.project === !out.package) throw new Error('exactly one of --project / --package')
+  if (!out.project === !out.package) throw new Error('give exactly one of --project or --package')
   return out
 }
 
@@ -41,8 +41,8 @@ function syntheticProject (spec) {
   return dir
 }
 
-// Breadth-first over installed edges from the root; the first path found to each node is
-// the shortest, which is what the reference path should be.
+// Breadth-first search over installed edges from the root. The first path to each node is
+// the shortest path, and the reference path must be the shortest.
 export function findExposure (root, affected) {
   const paths = []
   const unknownSpecs = []
@@ -52,7 +52,7 @@ export function findExposure (root, affected) {
     const [node, path] = queue.shift()
     for (const edge of node.edgesOut.values()) {
       if (!edge.to || (edge.type === 'dev' && !node.isProjectRoot && !node.isWorkspace)) continue
-      // Workspace edges land on a Link; its dependencies live on the link target.
+      // A workspace edge goes to a Link. Its dependencies are on the link target.
       const to = edge.to.isLink ? edge.to.target : edge.to
       const hop = { name: edge.name, version: to.version, spec: edge.spec, type: edge.type }
       const bad = affected[edge.name]
@@ -79,7 +79,7 @@ function edgeTarget (edge) {
   return m ? { pkg: m[1], spec: m[2] || '*' } : { pkg: edge.name, spec: edge.spec }
 }
 
-// BFS like findExposure, once, labelling every unit. At most 3 reference paths per unit.
+// The same BFS as findExposure. It runs once and labels every advisory group, with at most 3 reference paths each.
 export function labelUnits (root, units) {
   const out = Object.fromEntries(Object.keys(units).map((u) => [u, { exposed: false, paths: [] }]))
   const seen = new Set([root])
@@ -121,8 +121,8 @@ function treeNodes (tree) {
   }))
   return [...tree.inventory.values()].map((n) => ({
     location: n.location,
-    name: n.name, // folder name: an alias (`strip-ansi-cjs`) or workspace link name
-    package: n.packageName, // the registry package actually installed
+    name: n.name, // folder name: an alias (`strip-ansi-cjs`) or a workspace link name
+    package: n.packageName, // the registry package that npm installs
     workspace: n.isLink || n.isWorkspace,
     root: n.isRoot || undefined,
     version: n.version,
@@ -153,7 +153,7 @@ function unitArgs (argv) {
   const out = {}
   for (let i = 0; i < argv.length; i += 2) out[argv[i].replace(/^--/, '')] = argv[i + 1]
   for (const k of ['before', 'units']) if (!out[k]) throw new Error(`--${k} is required`)
-  if (!out.project === !out.package) throw new Error('exactly one of --project / --package')
+  if (!out.project === !out.package) throw new Error('give exactly one of --project or --package')
   return out
 }
 
