@@ -169,7 +169,7 @@ the same result: 790 edges.
 
 ### Graph data model
 
-One graph, `fallout`. Counts are from the replay snapshot.
+One graph, `fallout`. Counts are from the `snapshot-v1` release, which also holds the eval incidents.
 
 ```mermaid
 graph LR
@@ -195,26 +195,26 @@ graph LR
 | Node | Count | Key properties |
 |---|---|---|
 | `Package` | 21,010 | `name`, `weekly_downloads`, `maintainer_count`, `has_provenance`, `pagerank`, `betweenness` |
-| `Version` | 34,012 | `key` (`name@version`), `name`, `version`, `published_at`, `deprecated`, `is_malicious`, `simulated` |
+| `Version` | 34,018 | `key` (`name@version`), `name`, `version`, `published_at`, `deprecated`, `is_malicious`, `simulated` |
 | `Maintainer` | 11,865 | `name`, `package_count`, `reach_packages`, `reach_downloads`, `reach_rank_pagerank` |
 | `Repo` | 6 | `key`, `full_name`, `default_branch`, `checked_ref`, `head_sha`, `has_lockfile`, `lockfile_version` |
-| `Advisory` | 40 | `id` (OSV/GHSA), `kind` (MAL or VULN), `severity`, `summary`, `published_at`, `url` |
+| `Advisory` | 41 | `id` (OSV/GHSA), `kind` (MAL or VULN), `severity`, `summary`, `published_at`, `url` |
 | `Incident` | 14 | `id`, `title`, `started_at`, `blast_at`, `exposed_versions`, `status`, `simulated`, `scenario` |
-| `Plan` | 9 | `id`, `incident`, `repo`, `status`, `body` (the fix plan, as JSON) |
+| `Plan` | 8 | `id`, `incident`, `repo`, `status`, `body` (the fix plan, as JSON) |
 | `Action` | 3 | `id`, `type`, `plan_id`, `approved_by`, `pr_url`, `verification`, `result` |
 
 | Edge | From → to | Count | Meaning |
 |---|---|---|---|
 | `DEPENDS_ON` | Version → Version | 114,810 | The version that npm resolves at S for one declared requirement. `requirement` is the semver range, `kind` is prod, peer or optional. |
 | `PKG_DEPENDS_ON` | Package → Package | 80,465 | Package-level projection of `DEPENDS_ON`, the input to PageRank and betweenness |
-| `HAS_VERSION` | Package → Version | 34,012 | |
+| `HAS_VERSION` | Package → Version | 34,018 | |
 | `MAINTAINS`, `PUBLISHED` | Maintainer → Package / Version | 83,511 / 33,460 | Account ownership and who published each version |
 | `DIRECT_DEP` | Repo → Version | 36 | A dependency in the repo's `package.json`, resolved at S |
 | `LOCKS` | Repo → Version | 828 | A version in the repo's lockfile, with its `node_modules` path |
 | `OVERRIDES` | Repo → Package | 1 | An entry in the repo's `overrides` |
-| `AFFECTS` | Advisory → Version | 583 | Affected versions, from OSV |
-| `INCLUDES` | Incident → Advisory | 63 | The advisories that make up an incident |
-| `CAN_RESOLVE_TO` | Version or Repo → Version | 1,452 | npm would pick this affected version for this requirement (see [Exposure](#exposure)) |
+| `AFFECTS` | Advisory → Version | 589 | Affected versions, from OSV |
+| `INCLUDES` | Incident → Advisory | 65 | The advisories that make up an incident |
+| `CAN_RESOLVE_TO` | Version or Repo → Version | 1,776 | npm would pick this affected version for this requirement (see [Exposure](#exposure)) |
 | `EXPOSES` | Incident → Version or Repo | 10,674 | Blast-radius result: `hop` and parent pointer `via`. On a Repo edge, `status` holds the repo status. |
 | `FOR`, `ON`, `REMEDIATES` | Plan / Action → Repo / Incident | | The audit trail of planned and executed fixes |
 
