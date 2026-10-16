@@ -142,12 +142,53 @@ async def call_tool(name: str, request: Request) -> dict[str, Any]:
     return env
 
 
+@app.get("/api/incidents")
+def incidents() -> list[dict[str, Any]]:
+    return rows(graph(), "incident_list")
+
+
+@app.get("/api/graph/{incident}")
+def incident_graph(incident: str) -> dict[str, Any]:
+    """Affected versions (hop 0) plus every exposed node with its BFS parent, hop and status."""
+    g = graph()
+    affected = rows(g, "incident_affected_graph", {"incident": incident})
+    exposed = rows(g, "incident_graph", {"incident": incident})
+    if not affected:
+        raise HTTPException(404, f"incident {incident} is not ingested")
+    return {
+        "incident": incident,
+        "affected": affected,
+        "nodes": exposed,
+        "anchor": load_anchor()["S"],
+    }
+
+
+@app.post("/api/replay/{incident}")
+async def replay(incident: str) -> dict[str, Any]:
+    """Re-ingest the advisories and recompute the blast radius, through the MCP tools so the
+    event log shows the same tool calls the agent makes."""
+    ing = await state.tools.call("ingest_advisory", {"incident_id": incident})
+    bus.emit("tool", tool="ingest_advisory", via="console", **(ing.get("summary") or {}))
+    blast = await state.tools.call("blast_radius", {"incident_id": incident})
+    bus.emit("tool", tool="blast_radius", via="console", **(blast.get("summary") or {}))
+    return {"ingest": ing["result"], "blast": blast["result"]}
+
+
+@app.get("/api/results")
+def results() -> Any:
+    path = ROOT / "eval" / "results.json"
+    if not path.exists():
+        raise HTTPException(404, "no eval results yet: run python -m eval.run")
+    import json
+
+    return json.loads(path.read_text())
+
+
 @app.get("/api/plans")
 def plans(status: str | None = None) -> list[dict[str, Any]]:
-    return [
-        {**p, "body": None} | {"summary": p["body"][:2000]}
-        for p in rows(graph(), "plan_list", {"status": status})
-    ]
+    import json
+
+    return [{**p, "body": json.loads(p["body"])} for p in rows(graph(), "plan_list", {"status": status})]
 
 
 @app.get("/api/plans/{plan_id}")
@@ -223,10 +264,21 @@ async def ws(socket: WebSocket) -> None:
                     result = await run_chat(msg["message"])
                     await socket.send_json({"type": "answer", "answer": result})
 
-        async with anyio.create_task_group() as tg:
-            tg.start_soon(pump)
-            tg.start_soon(listen)
+        try:
+            async with anyio.create_task_group() as tg:
+                tg.start_soon(pump)
+                tg.start_soon(listen)
+        except* WebSocketDisconnect:
+            pass  # the console closed the tab
     except WebSocketDisconnect:
         pass
     finally:
         bus.unsubscribe(q)
+
+
+# The built console (web/dist), when present. Mounted last so /api and /ws win.
+_DIST = ROOT / "web" / "dist"
+if _DIST.exists():
+    from fastapi.staticfiles import StaticFiles
+
+    app.mount("/", StaticFiles(directory=_DIST, html=True), name="console")

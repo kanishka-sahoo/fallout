@@ -79,7 +79,9 @@ def regenerate(
     """Copy `checkout`, write `manifest`, prune affected lock entries, run the sandboxed
     install. The Verification is set only when npm itself failed."""
     ensure_image()
-    work = Path(tempfile.mkdtemp(prefix="fallout-sandbox-"))
+    # Under compose the API talks to the host's Docker daemon, so the bind-mounted dir must be
+    # a path the host sees too: FALLOUT_SANDBOX_TMP is mounted at the same path on both sides.
+    work = Path(tempfile.mkdtemp(prefix="fallout-sandbox-", dir=os.environ.get("FALLOUT_SANDBOX_TMP")))
     shutil.copytree(checkout, work, ignore=shutil.ignore_patterns(".git", "node_modules"), dirs_exist_ok=True)
     (work / "package.json").write_text(json.dumps(manifest, indent=2) + "\n")
     pruned = prune_lock(work, affected)

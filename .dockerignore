@@ -1,0 +1,13 @@
+.env
+.git
+.venv
+data/
+scratch/
+**/node_modules
+web/dist
+eval/oracle/trees
+eval/oracle/labels
+**/__pycache__
+.mypy_cache
+.ruff_cache
+.pytest_cache

@@ -26,6 +26,8 @@ known approximation. The README's Limitations section is generated from this fil
 | D17 | §5.3 affected versions from OSV | When OSV gives ranges only (most GHSA records), they are expanded against the registry packument with npm semver (`semver-eval.mjs` `filter`). Vulnerable versions published after S are dropped | They did not exist at S, and keeping them would break the anchor invariant. |
 | D18 | §6.2 `exposure_path(repo, incident_id)` | `exposure_path(incident_id, repo=None, package=None)`: the target can also be `name` (its version at S) or `name@version` | The eval's package targets need the same tool as the repos. |
 | D19 | §6.2 `blast_radius(max_hops=8)` | Default 16 | The replay reaches hop 10, and the eval's cross-spawn unit reaches hop 13. `truncated` is still reported. |
+| D20 | §3 frontend: React + Vite + TS, sigma.js + graphology, Tailwind | Same, without Tailwind: one token-based stylesheet (`web/src/styles.css`). The blast graph is drawn as concentric rings by hop (`web/src/layout.ts`) instead of a force layout | A dozen design tokens did not need a framework. The rings make the hop count, which is the point of the picture, readable at a glance. |
+| D21 | `docker-compose.yml` `FALKORDB_ARGS` with `TIMEOUT 0` | `TIMEOUT` dropped (TIMEOUT_MAX / TIMEOUT_DEFAULT kept); compose gains `seed`, `api` and a build-only `sandbox` service | FalkorDB 4.22 aborts module load when the deprecated `TIMEOUT` is combined with `TIMEOUT_MAX`. `fallout/db.py` still lifts every limit on connect. |
 
 ## Eval protocol notes
 
