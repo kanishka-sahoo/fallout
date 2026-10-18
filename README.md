@@ -286,7 +286,7 @@ docker compose up -d                          # seed -> falkordb -> api
 open http://127.0.0.1:8000                    # the console; approvals ask for FALLOUT_CONSOLE_KEY
 ```
 
-`scripts/snapshot.sh` writes `data/snapshots/dump.rdb` and the tarball. Run it on a machine that
+`ingest/snapshot.sh` writes `data/snapshots/dump.rdb` and the tarball. Run it on a machine that
 has the graph. The API mounts the Docker socket only so that the executor can start the sandbox
 container. If `OPENAI_API_KEY` is not set, the agent uses a scripted offline planner. Each answer
 from the offline planner has a label that says so.

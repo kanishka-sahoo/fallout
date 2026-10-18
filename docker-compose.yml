@@ -1,5 +1,5 @@
 # Runs the full stack from a snapshot, without a crawl:
-#   scripts/snapshot.sh            run on the machine that has the graph (writes data/snapshots/)
+#   ingest/snapshot.sh             run on the machine that has the graph (writes data/snapshots/)
 #   docker compose build sandbox   builds the lockfile sandbox image (it has no tokens)
 #   docker compose up -d           starts seed, then falkordb, then api (console on :8000)
 services:
@@ -12,7 +12,7 @@ services:
     command: >
       sh -c 'if [ -f /target/dump.rdb ]; then echo "graph already seeded";
              elif [ -f /snapshots/dump.rdb ]; then cp /snapshots/dump.rdb /target/ && echo "seeded from snapshot";
-             else echo "no data/snapshots/dump.rdb: run scripts/snapshot.sh" && exit 1; fi'
+             else echo "no data/snapshots/dump.rdb: run ingest/snapshot.sh" && exit 1; fi'
 
   falkordb:
     image: falkordb/falkordb:latest

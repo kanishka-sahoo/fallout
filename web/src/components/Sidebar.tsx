@@ -32,7 +32,7 @@ type Props = {
 }
 
 // The mark is the blast radius itself: the malicious core, a near ring and a far ring.
-export function Mark({ className }: { className?: string }) {
+function Mark({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 32 32" className={className} aria-hidden>
       <circle cx="16" cy="16" r="5" fill="#C21E3A" />

@@ -22,7 +22,7 @@ export function CopyButton({ text, label = 'Copy' }: { text: string; label?: str
 }
 
 // The JSON a user pastes into package.json: the pins as new values, plus the overrides block.
-export const changesJson = ({ pin, overrides }: Changes) => {
+const changesJson = ({ pin, overrides }: Changes) => {
   const out: Record<string, unknown> = {}
   for (const [pkg, c] of Object.entries(pin)) out[c.field] = { ...(out[c.field] as object), [pkg]: c.to }
   if (Object.keys(overrides).length) out.overrides = overrides

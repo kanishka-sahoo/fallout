@@ -1,7 +1,7 @@
 // Client for api/main.py. Tool calls use the same MCP server as the agent.
 
 // Display labels for repo status values. The API values do not change.
-export const STATUS_LABEL: Record<string, string> = {
+const STATUS_LABEL: Record<string, string> = {
   LOCKED_MALICIOUS: 'Malicious version in lockfile',
   EXPOSED_NO_LOCKFILE: 'Exposed (no lockfile)',
   RANGE_ADMITS_LOCK_SAFE: 'Lockfile safe, range allows malicious version',

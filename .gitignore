@@ -15,4 +15,6 @@ eval/oracle/trees/
 data/logs/
 eval/oracle/labels/
 docs/media/*.webm
+docs/media/*.mp4
+docs/media/*.srt
 data/tmp/

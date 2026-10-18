@@ -75,9 +75,6 @@ class CachedClient:
         """Returns the parsed body, or None for a 404."""
         return await self._fetch("GET", url, None, headers)
 
-    async def post_json(self, url: str, body: Any) -> Any | None:
-        return await self._fetch("POST", url, body, None)
-
     async def _fetch(self, method: str, url: str, body: Any, headers: dict[str, str] | None) -> Any | None:
         path = self._path(method, url, body)
         if path.exists():
