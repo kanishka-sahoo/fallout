@@ -375,7 +375,7 @@ Separately, the product itself uses an LLM (`gpt-6-luna`) for the agent, as desc
 
 The ecosystem analysis updates Zimmermann, Staicu, Tenny and Pradel, *Small World with High
 Risks: A Study of Security Threats in the npm Ecosystem* (USENIX Security 2019), on a graph that
-you can reproduce. [docs/blog.md](docs/blog.md) has the write-up.
+you can reproduce.
 
 ## Layout
 
@@ -389,5 +389,5 @@ analysis/       PageRank, betweenness, maintainer reach
 workers/        npm-pick-manifest resolver, semver evaluator, sandbox image
 eval/           oracle (arborist), dataset, sampler, runner, grader, results
 web/            the incident console
-docs/           BUILD.md (spec), DECISIONS.md (deviations), blog.md, media
+docs/           BUILD.md (spec), DECISIONS.md (deviations), media
 ```
