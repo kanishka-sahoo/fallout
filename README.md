@@ -54,7 +54,7 @@ Notes on the results:
   names a different version than npm would install.
 - G gives the same results as C. The agent adds no error to the graph results. This is by
   design: the graph is the source of truth, and the agent does not answer from its own knowledge.
-  The agent turns a question in plain English into the right tool calls, chains them (blast
+- The agent turns a question in plain English into the right tool calls, chains them (eg: blast
   radius, then exposure path, then repo status, then plan_fix), explains the result with cited
   paths and requests approval for a fix. G needs a caller that already knows which tool to call
   with which arguments.
@@ -81,14 +81,11 @@ This is the replay of the chalk/debug incident against the six demo repos:
 
 The blast radius is 4,575 versions in 3,348 packages, out to hop 10. The traversal takes
 approximately 0.4 s. When we approved the fixes, Fallout opened real PRs in the demo org. The
-sandbox verified each fix, and a recheck changed each repo to `MITIGATED_BY_OVERRIDE`:
-[billing-api#1](https://github.com/fallout-demo/billing-api/pull/1),
-[cli-tool#1](https://github.com/fallout-demo/cli-tool/pull/1),
-[storefront-next#1](https://github.com/fallout-demo/storefront-next/pull/1).
+sandbox verified each fix, and a recheck changed each repo to `MITIGATED_BY_OVERRIDE`.
 
 ## Simulate an attack
 
-The console can also run attacks that have not happened. **Simulate an attack** builds a
+The console can also run attacks that have never happened. **Simulate an attack** builds a
 scenario and sends it through the same pipeline as the replay (`fallout/simulate.py`):
 
 - **Malicious release.** An attacker publishes a new version of one or more packages (next
@@ -156,10 +153,10 @@ not exist at S, so Fallout adds them from OSV.
 
 ### Exposure
 
-A target is exposed when npm *would pick* an affected version for a requirement in its dependency
+We consider a target to be exposed when npm *would pick* an affected version for a requirement in its dependency
 tree:
 
-- For a malicious package advisory, Fallout resolves with the malicious versions added at their
+- For a malicious package advisory, Fallout resolves this with the malicious versions added at their
   publish times.
 - For a CVE/GHSA advisory, the version that npm resolves at S is in the affected range.
 
@@ -241,7 +238,7 @@ Indexes are in `graph/queries/schema_indexes.cypher`.
 All queries are in `graph/queries/*.cypher`. Each tool returns
 `{result, paths, cypher, timing_ms}`. The agent must cite a returned `path_id` for each claim.
 
-### Fixes
+### How we handle fixes
 
 `plan_fix` writes the smallest override that removes the exposure. It uses a version-specific
 override (an `overrides` key with a version, e.g. `"debug@4.4.2"`):
@@ -330,25 +327,6 @@ uv run python -m analysis.algorithms && uv run python -m fallout.advisory && uv 
 uv run python -m eval.dataset && uv run python -m eval.sample && uv run python -m eval.run
 ```
 
-## Limitations
-
-[docs/DECISIONS.md](docs/DECISIONS.md) has the full list and all deviations from the build spec.
-
-- Fallout approximates `dist-tags.latest` at S as the highest stable, non-deprecated version
-  published at or before S. The deprecation flags are from today, not from S.
-- Fallout does not model npm dedupe and hoisting. Each requirement resolves independently. A peer
-  dependency resolves on its own, but npm reuses the installed version. This causes every invalid
-  Fallout path in the eval.
-- Fallout does not follow non-registry specs (git, tarball, `file:`) or `bundleDependencies`.
-- Download counts are from today. Fallout uses them only for weighting and display.
-- The `LOCKED_MALICIOUS` lockfile of `storefront-next` is a synthetic fixture. We edited it by
-  hand to `debug@4.4.2`, because npm has removed the real tarball.
-- Overrides change the status, not the resolution. `DEPENDS_ON` is the dependency tree without
-  overrides. Fallout applies overrides when it calculates the status.
-- The seed set is the 17k packages of `npm-high-impact`, not the full registry.
-- Simulations run against the snapshot at S. Releases published after S that are not part of
-  the scenario are not in the graph.
-
 ## Ethics
 
 Fallout uses only public metadata from the npm registry, deps.dev and OSV. It never downloads or
@@ -364,7 +342,7 @@ not measure the people who own the accounts. The maintainer data has usernames o
 
 As the rules require, we disclose that AI coding assistants were used to build Fallout. Most of
 the code, tests and docs were written with Claude Code (Anthropic), run through T3 Code; commits
-by `t3code@users.noreply.github.com` come from that tool. The builder wrote the spec
+by `t3code@users.noreply.github.com` come from that tool. We (humans) wrote the spec
 ([docs/BUILD.md](docs/BUILD.md)), chose the architecture, made the design decisions recorded in
 [docs/DECISIONS.md](docs/DECISIONS.md) (for example, the exposure rule and the approval gate),
 reviewed the changes, and ran and checked the eval and the demo.
